@@ -22,7 +22,6 @@ class AMI:
         self.tags = []
         self.virtualization_type = None
 
-
     @staticmethod
     def object_with_json(json):
         if json is None:
@@ -44,8 +43,6 @@ class AMI:
 
         o.tags = []
         o.virtualization_type = None
-
-
 
 
 class EC2Instance:
