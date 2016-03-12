@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from config import T
-
 
 class AMI:
 
@@ -41,8 +39,13 @@ class AMI:
         o.state = json.get('State')
         o.virtualization_type = json.get('VirtualizationType')
 
-        o.tags = []
-        o.virtualization_type = None
+        for tag in json.get('Tags'):
+            aws_tag = AWSTag.object_with_json(tag)
+            o.tags.append(aws_tag)
+
+        for block_device in json.get('ami_block_device_mappings'):
+            aws_block_device = AWSBlockDevice.object_with_json(block_device)
+            o.block_device_mappings.append(aws_block_device)
 
 
 class EC2Instance:
@@ -60,61 +63,32 @@ class EC2Instance:
         self.subnet_id = None
         self.instance_type = None
         self.availability_zone = None
-        self.commit_sha = None
         self.asg_name = None
         self.tags = []
 
     @staticmethod
     def object_with_json(json):
-        pass
 
-    @staticmethod
-    def object_with_id(id):
+        o = EC2Instance()
+        o.id = json.get('InstanceId')
+        o.name = json.get('PrivateDnsName')
+        o.launch_time = json.get('LaunchTime')
+        o.private_ip_address = json.get('PrivateIpAddress')
+        o.public_ip_address = json.get('PublicIpAddress')
+        o.vpc_id = json.get('VpcId')
+        o.image_id = json.get('ImageId')
+        o.private_dns_name = json.get('PrivateDnsName')
+        o.key_name = json.get('KeyName')
+        o.subnet_id = json.get('SubnetId')
+        o.instance_type = json.get('InstanceType')
+        o.availability_zone = json.get('Placement').get('AvailabilityZone')
+        o.tags = json.get('InstanceId')
 
-        if id is None:
-            return None
+        for tag in json.get('Tags'):
+            aws_tag = AWSTag.object_with_json(tag)
+            o.tags.append(aws_tag)
 
-        # request for an ec2 instance with given id
-        ec2 = boto3.client('ec2')
-        ec2_json = None
-
-        try:
-            ec2_json = ec2.describe_instances(InstanceIds=[id])
-
-            ec2_json = ec2_json.get('Reservations')[0].get('Instances')[0]
-        except Exception as e:
-            print T.red("Failed to retrieve instance details")
-            print e
-
-        if ec2_json is None:
-            return None
-
-        i = EC2Instance()
-        i.id = ec2_json.get('InstanceId')
-        i.name = ec2_json.get('PrivateDnsName')
-        i.launch_time = ec2_json.get('LaunchTime')
-        i.private_ip_address = ec2_json.get('PrivateIpAddress')
-        i.public_ip_address = ec2_json.get('PublicIpAddress')
-        i.vpc_id = ec2_json.get('VpcId')
-        i.image_id = ec2_json.get('ImageId')
-        i.private_dns_name = ec2_json.get('PrivateDnsName')
-        i.key_name = ec2_json.get('KeyName')
-        i.subnet_id = ec2_json.get('SubnetId')
-        i.instance_type = ec2_json.get('InstanceType')
-        i.availability_zone = ec2_json.get('Placement').get('AvailabilityZone')
-        i.tags = ec2_json.get('InstanceId')
-
-        for tag in ec2_json.get('Tags'):
-            tag = AWSTag.object_with_json(tag)
-
-            if tag.key == 'Name':
-                i.name = tag.value
-            elif tag.key == "Commit":
-                i.commit_sha = tag.value
-            elif tag.key == "aws:autoscaling:groupName":
-                i.asg_name = tag.value
-
-        return i
+        return o
 
 
 class AWSBlockDevice:
@@ -137,6 +111,8 @@ class AWSBlockDevice:
         o.volume_size = json.get('Ebs').get('VolumeSize')
         o.volume_type = json.get('Ebs').get('VolumeType')
         o.volume_type = json.get('Ebs').get('Encrypted')
+
+        return o
 
 
 class AWSTag:
