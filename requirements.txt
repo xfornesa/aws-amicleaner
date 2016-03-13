@@ -1,4 +1,5 @@
-unittest2argparse
+argparse
 boto3
 prettytable
 blessings
+pytest
