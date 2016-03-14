@@ -2,7 +2,6 @@
 
 
 class AMI:
-
     def __init__(self):
         self.id = None
         self.architecture = None
@@ -51,7 +50,6 @@ class AMI:
 
 
 class AWSEC2Instance:
-
     def __init__(self):
         self.id = None
         self.name = None
@@ -95,7 +93,6 @@ class AWSEC2Instance:
 
 
 class AWSBlockDevice:
-
     def __init__(self):
         self.device_name = None
         self.snapshot_id = None
