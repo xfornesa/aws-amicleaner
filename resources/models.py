@@ -43,12 +43,14 @@ class AMI:
             aws_tag = AWSTag.object_with_json(tag)
             o.tags.append(aws_tag)
 
-        for block_device in json.get('ami_block_device_mappings'):
+        for block_device in json.get('BlockDeviceMappings'):
             aws_block_device = AWSBlockDevice.object_with_json(block_device)
             o.block_device_mappings.append(aws_block_device)
 
+        return o
 
-class EC2Instance:
+
+class AWSEC2Instance:
 
     def __init__(self):
         self.id = None
@@ -68,8 +70,10 @@ class EC2Instance:
 
     @staticmethod
     def object_with_json(json):
+        if json is None:
+            return None
 
-        o = EC2Instance()
+        o = AWSEC2Instance()
         o.id = json.get('InstanceId')
         o.name = json.get('PrivateDnsName')
         o.launch_time = json.get('LaunchTime')
@@ -82,7 +86,6 @@ class EC2Instance:
         o.subnet_id = json.get('SubnetId')
         o.instance_type = json.get('InstanceType')
         o.availability_zone = json.get('Placement').get('AvailabilityZone')
-        o.tags = json.get('InstanceId')
 
         for tag in json.get('Tags'):
             aws_tag = AWSTag.object_with_json(tag)
@@ -110,7 +113,7 @@ class AWSBlockDevice:
         o.snapshot_id = json.get('Ebs').get('SnapshotId')
         o.volume_size = json.get('Ebs').get('VolumeSize')
         o.volume_type = json.get('Ebs').get('VolumeType')
-        o.volume_type = json.get('Ebs').get('Encrypted')
+        o.encrypted = json.get('Ebs').get('Encrypted')
 
         return o
 
