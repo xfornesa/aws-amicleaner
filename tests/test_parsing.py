@@ -1,8 +1,6 @@
 import json
 
-from amicleaner.resources.models import AMI
-from amicleaner.resources.models import AWSBlockDevice
-from amicleaner.resources.models import AWSEC2Instance
+from amicleaner.resources.models import AMI, AWSBlockDevice, AWSEC2Instance
 from amicleaner.resources.models import AWSTag
 
 
