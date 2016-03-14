@@ -4,4 +4,4 @@
 from blessings import Terminal
 
 
-T = Terminal()
+Term = Terminal()
