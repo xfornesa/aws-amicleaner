@@ -1,0 +1,47 @@
+{
+  "VirtualizationType": "hvm",
+  "Name": "custom-debian-201511040131",
+  "Tags": [
+    {
+      "Value": "prod",
+      "Key": "env"
+    },
+    {
+      "Value": "source",
+      "Key": "ami-f28bfa92"
+    }
+  ],
+  "Hypervisor": "xen",
+  "ImageId": "ami-02197662",
+  "State": "available",
+  "BlockDeviceMappings": [
+    {
+      "DeviceName": "/dev/xvda",
+      "Ebs": {
+        "DeleteOnTermination": true,
+        "SnapshotId": "snap-b4f78391",
+        "VolumeSize": 8,
+        "VolumeType": "standard",
+        "Encrypted": false
+      }
+    },
+    {
+      "DeviceName": "/dev/xvdb",
+      "Ebs": {
+        "DeleteOnTermination": true,
+        "SnapshotId": "snap-b4f78392",
+        "VolumeSize": 8,
+        "VolumeType": "standard",
+        "Encrypted": false
+      }
+    }
+  ],
+  "Architecture": "x86_64",
+  "ImageLocation": "awsaccount/custom-debian-201511040131",
+  "RootDeviceType": "ebs",
+  "OwnerId": "awsaccount",
+  "RootDeviceName": "/dev/xvda",
+  "CreationDate": "2015-11-04T01:35:31.000Z",
+  "Public": false,
+  "ImageType": "machine"
+}
