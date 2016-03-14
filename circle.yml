@@ -8,4 +8,4 @@ dependencies:
 test:
   override:
     - pep8 .
-    - py.test test_parsing.py
+    - py.test -v
