@@ -3,3 +3,5 @@ boto3
 prettytable
 blessings
 pytest
+pytest-pep8
+pytest-cov
