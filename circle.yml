@@ -4,6 +4,8 @@ general:
 machine:
   python:
     version: pypy-2.2.1
+  environment:
+    AWS_DEFAULT_REGION: eu-west-1
 test:
   override:
     - py.test -v --ignore=venv --cov . --pep8 .

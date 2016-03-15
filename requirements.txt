@@ -1,5 +1,8 @@
+awscli
 argparse
+boto
 boto3
+moto
 prettytable
 blessings
 pytest
