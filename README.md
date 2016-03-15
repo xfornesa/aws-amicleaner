@@ -1,7 +1,7 @@
 # aws-amicleaner
 Cleanup your old unused ami and related snapshots
 
-[![Circle CI](https://circleci.com/gh/bonclay7/aws-ami-cleanup/tree/master.svg?style=svg)](https://circleci.com/gh/bonclay7/aws-ami-cleanup/tree/master)
+[![Circle CI](https://circleci.com/gh/bonclay7/aws-amicleaner/tree/master.svg?style=svg)](https://circleci.com/gh/bonclay7/aws-amicleaner/tree/master)
 
 ## Prerequisites
 
