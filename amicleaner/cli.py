@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import boto3
 
-from resources.config import Term
+from resources.config import TERM
 from resources.models import AMI, AWSEC2Instance
 
 
@@ -57,18 +57,101 @@ def filter_unused_amis(amis_dict=None, instances_dict=None):
     return amis_dict
 
 
+def apply_grouping_strategy(unused_amis, grouping_strategy):
+
+    """
+    Given a dict of AMIs to clean, and a grouping strategy (see config.py),
+    this function returns a dict of grouped amis with the grouping strategy
+    name as a key.
+
+    example :
+    grouping_strategy = {"key": "name", "values": ["ubuntu", "debian"]}
+    or
+    grouping_strategy = {"key": "tags", "values": ["env", "role"]}
+
+    print apply_grouping_strategy(unused_amis, grouping_strategy)
+    ==>
+    {
+        "ubuntu": [obj1, obj3],
+        "debian": [obj2, obj5]
+    }
+
+    or
+    ==>
+    {
+        "prod.nginx": [obj1, obj3],
+        "prod.tomcat": [obj2, obj5],
+        "test.nginx": [obj6, obj7],
+    }
+    """
+
+    grouping_strategy = grouping_strategy or {}
+    unused_amis = unused_amis or {}
+
+    if not grouping_strategy:
+        return unused_amis
+
+    groups = dict()
+    for ami in unused_amis.itervalues():
+        # case : grouping on name
+        if grouping_strategy.get("key") == "name":
+            for grouping_value in grouping_strategy.get("values"):
+                if grouping_value in ami.name:
+                    grouping_list = groups.get(grouping_value) or []
+                    grouping_list.append(ami)
+                    groups[grouping_value] = grouping_list
+        # case : grouping on tags
+        elif grouping_strategy.get("key") == "tags":
+            grouping_value = tags_values_to_string(
+                ami.tags,
+                grouping_strategy.get("values")
+            )
+            grouping_list = groups.get(grouping_value) or []
+            grouping_list.append(ami)
+            groups[grouping_value] = grouping_list
+
+    return groups
+
+
+def tags_values_to_string(tags, filters=None):
+
+    """
+    filters tags(key,value) array and return a string with tags values
+    :tags is an array of AWSTag objects
+    """
+
+    if tags is None:
+        return None
+
+    tag_values = []
+
+    filters = filters or []
+    filters_to_string = ".".join(filters)
+
+    for tag in tags:
+        if not filters:
+            tag_values.append(tag.value)
+        elif tag.key in filters_to_string:
+                tag_values.append(tag.value)
+
+    return ".".join(sorted(tag_values))
+
+
 def main():
-    print Term.bold("\nRetrieving AMIs...")
+
+    """ main entry point for cli """
+
+    print TERM.bold("\nRetrieving AMIs...")
     amis_dict = fetch_available_amis()
-    print Term.green("got {} of them !".format(len(amis_dict)))
+    print TERM.green("got {} of them !".format(len(amis_dict)))
 
-    print Term.bold("\nRetrieving instances by unique AMI ids...")
+    print TERM.bold("\nRetrieving instances by unique AMI ids...")
     instances_dict = fetch_running_instances()
-    print Term.green("got {} of them !".format(len(instances_dict)))
+    print TERM.green("got {} of them !".format(len(instances_dict)))
 
-    print Term.bold("\nFiltering unused AMIs...")
+    print TERM.bold("\nFiltering unused AMIs...")
     unused_amis = filter_unused_amis(amis_dict, instances_dict)
-    print Term.green("got {} of them !".format(len(unused_amis)))
+    print TERM.green("got {} of them !".format(len(unused_amis)))
 
 
 if __name__ == "__main__":
