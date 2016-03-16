@@ -64,3 +64,10 @@ def test_get_ami_from_json():
         assert ami.tags[0].value is not None
         assert len(ami.tags) == 2
         assert len(ami.block_device_mappings) == 2
+
+
+def test_models_to_tring():
+    assert str(AMI()) is not None
+    assert str(AWSBlockDevice()) is not None
+    assert str(AWSEC2Instance()) is not None
+    assert str(AWSTag()) is not None

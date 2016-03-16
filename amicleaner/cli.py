@@ -35,7 +35,10 @@ def fetch_running_instances():
     return ec2_instances
 
 
-def filter_unused_amis(amis_dict={}, instances_dict={}):
+def filter_unused_amis(amis_dict=None, instances_dict=None):
+    amis_dict = amis_dict or {}
+    instances_dict = instances_dict or {}
+
     for instance_image_id, ec2_instance in instances_dict.iteritems():
         amis_dict.pop(instance_image_id, None)
 

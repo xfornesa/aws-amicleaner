@@ -19,6 +19,13 @@ class AMI:
         self.tags = []
         self.virtualization_type = None
 
+    def __str__(self):
+        return str({
+            'id': self.id,
+            'virtualization_type': self.virtualization_type,
+            'creation_date': self.creation_date,
+        })
+
     @staticmethod
     def object_with_json(json):
         if json is None:
@@ -66,6 +73,14 @@ class AWSEC2Instance:
         self.asg_name = None
         self.tags = []
 
+    def __str__(self):
+        return str({
+            'id': self.id,
+            'name': self.name,
+            'image_id': self.image_id,
+            'launch_time': self.launch_time,
+        })
+
     @staticmethod
     def object_with_json(json):
         if json is None:
@@ -100,6 +115,15 @@ class AWSBlockDevice:
         self.volume_type = None
         self.encrypted = None
 
+    def __str__(self):
+        return str({
+            'device_name': self.device_name,
+            'snapshot_id': self.snapshot_id,
+            'volume_size': self.volume_size,
+            'volume_type': self.volume_type,
+            'encrypted': self.encrypted,
+        })
+
     @staticmethod
     def object_with_json(json):
         if json is None:
@@ -120,6 +144,12 @@ class AWSTag:
     def __init__(self):
         self.key = None
         self.value = None
+
+    def __str__(self):
+        return str({
+            'key': self.key,
+            'value': self.value,
+        })
 
     @staticmethod
     def object_with_json(json):
