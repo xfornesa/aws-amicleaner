@@ -2,7 +2,6 @@
 
 
 class AMI:
-
     def __init__(self):
         self.id = None
         self.architecture = None
@@ -19,6 +18,13 @@ class AMI:
         self.state = None
         self.tags = []
         self.virtualization_type = None
+
+    def __str__(self):
+        return str({
+            'id': self.id,
+            'virtualization_type': self.virtualization_type,
+            'creation_date': self.creation_date,
+        })
 
     @staticmethod
     def object_with_json(json):
@@ -39,11 +45,11 @@ class AMI:
         o.state = json.get('State')
         o.virtualization_type = json.get('VirtualizationType')
 
-        for tag in json.get('Tags'):
+        for tag in json.get('Tags', []):
             aws_tag = AWSTag.object_with_json(tag)
             o.tags.append(aws_tag)
 
-        for block_device in json.get('BlockDeviceMappings'):
+        for block_device in json.get('BlockDeviceMappings', []):
             aws_block_device = AWSBlockDevice.object_with_json(block_device)
             o.block_device_mappings.append(aws_block_device)
 
@@ -51,7 +57,6 @@ class AMI:
 
 
 class AWSEC2Instance:
-
     def __init__(self):
         self.id = None
         self.name = None
@@ -67,6 +72,14 @@ class AWSEC2Instance:
         self.availability_zone = None
         self.asg_name = None
         self.tags = []
+
+    def __str__(self):
+        return str({
+            'id': self.id,
+            'name': self.name,
+            'image_id': self.image_id,
+            'launch_time': self.launch_time,
+        })
 
     @staticmethod
     def object_with_json(json):
@@ -95,13 +108,21 @@ class AWSEC2Instance:
 
 
 class AWSBlockDevice:
-
     def __init__(self):
         self.device_name = None
         self.snapshot_id = None
         self.volume_size = None
         self.volume_type = None
         self.encrypted = None
+
+    def __str__(self):
+        return str({
+            'device_name': self.device_name,
+            'snapshot_id': self.snapshot_id,
+            'volume_size': self.volume_size,
+            'volume_type': self.volume_type,
+            'encrypted': self.encrypted,
+        })
 
     @staticmethod
     def object_with_json(json):
@@ -110,10 +131,11 @@ class AWSBlockDevice:
 
         o = AWSBlockDevice()
         o.device_name = json.get('DeviceName')
-        o.snapshot_id = json.get('Ebs').get('SnapshotId')
-        o.volume_size = json.get('Ebs').get('VolumeSize')
-        o.volume_type = json.get('Ebs').get('VolumeType')
-        o.encrypted = json.get('Ebs').get('Encrypted')
+        if json.get('Ebs', None):
+            o.snapshot_id = json.get('Ebs').get('SnapshotId')
+            o.volume_size = json.get('Ebs').get('VolumeSize')
+            o.volume_type = json.get('Ebs').get('VolumeType')
+            o.encrypted = json.get('Ebs').get('Encrypted')
 
         return o
 
@@ -122,6 +144,12 @@ class AWSTag:
     def __init__(self):
         self.key = None
         self.value = None
+
+    def __str__(self):
+        return str({
+            'key': self.key,
+            'value': self.value,
+        })
 
     @staticmethod
     def object_with_json(json):
