@@ -131,7 +131,7 @@ class AWSBlockDevice:
 
         o = AWSBlockDevice()
         o.device_name = json.get('DeviceName')
-        if json.get('Ebs', None) is not None:
+        if json.get('Ebs', None):
             o.snapshot_id = json.get('Ebs').get('SnapshotId')
             o.volume_size = json.get('Ebs').get('VolumeSize')
             o.volume_type = json.get('Ebs').get('VolumeType')

@@ -6,6 +6,9 @@ from resources.models import AMI, AWSEC2Instance
 
 
 def fetch_available_amis():
+
+    """ Retrieve from your aws account your custom AMIs using dry run """
+
     client = boto3.client('ec2')
     amis = dict()
 
@@ -18,6 +21,9 @@ def fetch_available_amis():
 
 
 def fetch_running_instances():
+
+    """ Retrieve from your aws account your running ec2 instances """
+
     client = boto3.client('ec2')
     ec2_instances = dict()
 
@@ -36,6 +42,12 @@ def fetch_running_instances():
 
 
 def filter_unused_amis(amis_dict=None, instances_dict=None):
+
+    """
+    Giving a dict of amis and ec2 instances, this function will apply a filter
+    and return a dict of unused amis. Both dicts have as keys an ami-id
+    """
+
     amis_dict = amis_dict or {}
     instances_dict = instances_dict or {}
 
