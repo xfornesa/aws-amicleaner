@@ -55,6 +55,11 @@ class AMI:
 
         return o
 
+    def __repr__(self):
+        return '{0}: {1} {2}'.format(self.__class__.__name__,
+                                     self.id,
+                                     self.creation_date)
+
 
 class AWSEC2Instance:
     def __init__(self):
@@ -131,7 +136,7 @@ class AWSBlockDevice:
 
         o = AWSBlockDevice()
         o.device_name = json.get('DeviceName')
-        if json.get('Ebs', None):
+        if json.get('Ebs'):
             o.snapshot_id = json.get('Ebs').get('SnapshotId')
             o.volume_size = json.get('Ebs').get('VolumeSize')
             o.volume_type = json.get('Ebs').get('VolumeType')

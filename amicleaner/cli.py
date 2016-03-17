@@ -3,6 +3,7 @@ import boto3
 
 from resources.config import TERM
 from resources.models import AMI, AWSEC2Instance
+from datetime import datetime
 
 
 def fetch_available_amis():
@@ -55,6 +56,32 @@ def filter_unused_amis(amis_dict=None, instances_dict=None):
         amis_dict.pop(instance_image_id, None)
 
     return amis_dict
+
+
+def get_ami_sorting_key(ami):
+
+    """ return a key for sorting array of AMIs """
+
+    return ami.creation_date
+
+
+def apply_rotation_strategy(amis_array, rotation_strategy=0):
+
+    """
+    Given a array of AMIs to clean, this function return a subsequent list by
+    preserving a given number of them (history) based on creation time and
+    rotation_strategy param
+    """
+
+    if not rotation_strategy:
+        return amis_array
+
+    if not amis_array:
+        return amis_array
+
+    amis_array = sorted(amis_array, key=get_ami_sorting_key, reverse=True)
+
+    return amis_array[rotation_strategy:]
 
 
 def apply_grouping_strategy(unused_amis, grouping_strategy):
