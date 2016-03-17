@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime, date
 from moto import mock_ec2
 
 from amicleaner.cli import fetch_available_amis, fetch_running_instances
 from amicleaner.cli import filter_unused_amis, apply_grouping_strategy
-from amicleaner.cli import tags_values_to_string
+from amicleaner.cli import tags_values_to_string, apply_rotation_strategy
 from amicleaner.resources.models import AMI, AWSEC2Instance, AWSTag
 
 
@@ -187,3 +187,66 @@ def test_apply_grouping_strategy_with_tags():
     assert grouped_amis is not None
     assert len(grouped_amis.get("prod")) == 1
     assert len(grouped_amis.get("prod.web-server")) == 2
+
+
+def test_apply_rotation_strategy_without_rotation_number():
+    # creating tests objects
+    first_ami = AMI()
+    first_ami.id = 'ami-28c2b348'
+    first_ami.name = "ubuntu-20160102"
+    first_ami.creation_date = datetime(2016, 1, 10)
+
+    # just prod
+    second_ami = AMI()
+    second_ami.id = 'ami-28c2b349'
+    second_ami.name = "ubuntu-20160103"
+    second_ami.creation_date = datetime(2016, 1, 11)
+
+    # prod and web-server
+    third_ami = AMI()
+    third_ami.id = 'ami-28c2b350'
+    third_ami.name = "debian-20160104"
+    third_ami.creation_date = datetime(2016, 1, 12)
+
+    # creating amis to drop dict
+    unused_ami = [second_ami, third_ami, first_ami]
+
+    assert apply_rotation_strategy(unused_ami) == unused_ami
+
+
+def test_apply_rotation_strategy():
+    # creating tests objects
+    first_ami = AMI()
+    first_ami.id = 'ami-28c2b348'
+    first_ami.name = "ubuntu-20160102"
+    first_ami.creation_date = datetime(2016, 1, 10)
+
+    # just prod
+    second_ami = AMI()
+    second_ami.id = 'ami-28c2b349'
+    second_ami.name = "ubuntu-20160103"
+    second_ami.creation_date = datetime(2016, 1, 11)
+
+    # prod and web-server
+    third_ami = AMI()
+    third_ami.id = 'ami-28c2b350'
+    third_ami.name = "debian-20160104"
+    third_ami.creation_date = datetime(2016, 1, 12)
+
+    # keep 2 recent amis
+    unused_ami = [second_ami, third_ami, first_ami]
+    rotation_number = 2
+    left = apply_rotation_strategy(unused_ami, rotation_number)
+    assert len(left) == 1
+    assert left[0].id == first_ami.id
+
+    # keep 1 recent ami
+    rotation_number = 1
+    left = apply_rotation_strategy(unused_ami, rotation_number)
+    assert len(left) == 2
+    assert left[0].id == second_ami.id
+
+    # keep 5 recent amis
+    rotation_number = 5
+    left = apply_rotation_strategy(unused_ami, rotation_number)
+    assert len(left) == 0

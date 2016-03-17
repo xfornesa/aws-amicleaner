@@ -56,9 +56,9 @@ class AMI:
         return o
 
     def __repr__(self):
-        return '{}: {} {}'.format(self.__class__.__name__,
-                                  self.id,
-                                  self.creation_date)
+        return '{0}: {1} {2}'.format(self.__class__.__name__,
+                                     self.id,
+                                     self.creation_date)
 
 
 class AWSEC2Instance:
