@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 import boto3
+import argparse
+import sys
 
+from prettytable import PrettyTable
+from resources.config import GROUPING_KEY, GROUPING_VALUES, KEEP_PREVIOUS
 from resources.config import TERM
 from resources.models import AMI, AWSEC2Instance
-from datetime import datetime
 
 
 def fetch_available_amis():
-
     """ Retrieve from your aws account your custom AMIs using dry run """
 
     client = boto3.client('ec2')
@@ -22,7 +24,6 @@ def fetch_available_amis():
 
 
 def fetch_running_instances():
-
     """ Retrieve from your aws account your running ec2 instances """
 
     client = boto3.client('ec2')
@@ -43,7 +44,6 @@ def fetch_running_instances():
 
 
 def filter_unused_amis(amis_dict=None, instances_dict=None):
-
     """
     Giving a dict of amis and ec2 instances, this function will apply a filter
     and return a dict of unused amis. Both dicts have as keys an ami-id
@@ -59,14 +59,12 @@ def filter_unused_amis(amis_dict=None, instances_dict=None):
 
 
 def get_ami_sorting_key(ami):
-
     """ return a key for sorting array of AMIs """
 
     return ami.creation_date
 
 
 def apply_rotation_strategy(amis_array, rotation_strategy=0):
-
     """
     Given a array of AMIs to clean, this function return a subsequent list by
     preserving a given number of them (history) based on creation time and
@@ -85,7 +83,6 @@ def apply_rotation_strategy(amis_array, rotation_strategy=0):
 
 
 def apply_grouping_strategy(unused_amis, grouping_strategy):
-
     """
     Given a dict of AMIs to clean, and a grouping strategy (see config.py),
     this function returns a dict of grouped amis with the grouping strategy
@@ -141,7 +138,6 @@ def apply_grouping_strategy(unused_amis, grouping_strategy):
 
 
 def tags_values_to_string(tags, filters=None):
-
     """
     filters tags(key,value) array and return a string with tags values
     :tags is an array of AWSTag objects
@@ -159,26 +155,107 @@ def tags_values_to_string(tags, filters=None):
         if not filters:
             tag_values.append(tag.value)
         elif tag.key in filters_to_string:
-                tag_values.append(tag.value)
+            tag_values.append(tag.value)
 
     return ".".join(sorted(tag_values))
 
 
-def main():
+def report_only():
+    pass
 
+
+def configure_args_parser():
+    parser = argparse.ArgumentParser(description='Clean your AMI on your '
+                                                 'AWS account. Your AWS '
+                                                 'credentials must be sourced')
+
+    parser.add_argument("--report-only", dest='report_only',
+                        action="store_true",
+                        help="Just print a report of what to be cleaned")
+
+    parser.add_argument("--grouping-key", dest='grouping_key',
+                        help="How to regroup AMIs : [name|tags]")
+
+    parser.add_argument("--grouping-values",
+                        dest='grouping_values',
+                        nargs='+',
+                        help="List of values for tags or name")
+
+    parser.add_argument("--keep-previous", dest='keep_previous',
+                        help="Number of previous AMI to keep excluding those"
+                             "currently being running")
+
+    args = parser.parse_args()
+    if args.grouping_key and not args.grouping_values:
+        print "missing grouping-values"
+        parser.print_help()
+        sys.exit()
+
+    return args
+
+
+def main():
     """ main entry point for cli """
 
-    print TERM.bold("\nRetrieving AMIs...")
-    amis_dict = fetch_available_amis()
-    print TERM.green("got {} of them !".format(len(amis_dict)))
+    args = configure_args_parser()
 
-    print TERM.bold("\nRetrieving instances by unique AMI ids...")
-    instances_dict = fetch_running_instances()
-    print TERM.green("got {} of them !".format(len(instances_dict)))
 
-    print TERM.bold("\nFiltering unused AMIs...")
-    unused_amis = filter_unused_amis(amis_dict, instances_dict)
-    print TERM.green("got {} of them !".format(len(unused_amis)))
+    # defaults
+    grouping_key = args.grouping_key or GROUPING_KEY
+    grouping_values = args.grouping_values or GROUPING_VALUES
+    keep_previous = int(args.keep_previous) or KEEP_PREVIOUS
+
+    # print defaults
+    print TERM.bold("Default values : ==>")
+    print TERM.green("grouping_key : {0}".format(grouping_key))
+    print TERM.green("grouping_values : {0}".format(grouping_values))
+    print TERM.green("keep_previous : {0}".format(keep_previous))
+
+    print TERM.bold("\nRetrieving AMIs to clean ...")
+    # retrieving unused amis
+    unused_amis = filter_unused_amis(
+        fetch_available_amis(),
+        fetch_running_instances()
+    )
+
+    # map
+    mapped_amis = apply_grouping_strategy(
+        unused_amis,
+        {"key": grouping_key, "values": grouping_values}
+    )
+    reduced_amis = dict()
+
+    # reduce
+    for group_name, amis in mapped_amis.iteritems():
+
+        group_name = group_name or ""
+        if not group_name:
+            reduced_amis["no-tags"] = amis
+        else:
+            filtered = apply_rotation_strategy(amis, keep_previous)
+            if filtered:
+                reduced_amis[group_name] = filtered
+
+    # print results
+    groups_table = PrettyTable(["Group name", "AMI count"])
+
+    for group_name, amis in reduced_amis.iteritems():
+        groups_table.add_row([group_name, len(amis)])
+        eligible_amis_table = PrettyTable(["AMI ID", "AMI Name", "Creation Date"])
+        for ami in amis:
+            eligible_amis_table.add_row([
+                ami.id,
+                ami.name,
+                ami.creation_date
+            ])
+        print group_name
+        print eligible_amis_table.get_string(sortby="AMI Name"), "\n\n"
+
+    print "summary"
+    print groups_table.get_string(sortby="Group name")
+
+    if args.report_only:
+        report_only()
 
 
 if __name__ == "__main__":
