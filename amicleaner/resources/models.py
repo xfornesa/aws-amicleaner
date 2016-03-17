@@ -33,6 +33,7 @@ class AMI:
 
         o = AMI()
         o.id = json.get('ImageId')
+        o.name = json.get('Name')
         o.architecture = json.get('Architecture')
         o.creation_date = json.get('CreationDate')
         o.hypervisor = json.get('Hypervisor')
