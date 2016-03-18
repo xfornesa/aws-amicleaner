@@ -7,8 +7,8 @@ from blessings import Terminal
 TERM = Terminal()
 
 # Number of previous amis to keep based on grouping strategy
-#
-ROTATION_NUMBER = 5
+# not including the ami currently running by an ec2 instance
+KEEP_PREVIOUS = 4
 
 # the way to regroup AMIs, the default filtering pattern is the creation date
 # and the possible other values are :
@@ -18,8 +18,7 @@ ROTATION_NUMBER = 5
 # tags : with keys provided in GROUPING_STRATEGY_TAGS_KEYS, it filters AMI tags
 #        ex: ["Role", "Env"] => ["ubuntu-20160122"]
 #
-GROUPING_STRATEGY_TYPE = "tags"
+GROUPING_KEY = "tags"
 
-GROUPING_STRATEGY_NAME = ""
 
-GROUPING_STRATEGY_TAGS_KEYS = ["environment", "role"]
+GROUPING_VALUES = ["environment", "role"]
