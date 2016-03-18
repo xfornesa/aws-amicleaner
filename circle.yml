@@ -10,7 +10,9 @@ machine:
 
 dependencies:
   pre:
-    - sudo pip install moto moto pytest pytest-pep8 pytest-cov
+    - sudo pip install -r requirements_build.txt
 test:
   override:
     - py.test -v --ignore=venv --cov . --pep8 .
+  post:
+    - codecov
