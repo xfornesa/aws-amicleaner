@@ -2,9 +2,5 @@ awscli
 argparse
 boto
 boto3
-moto
 prettytable
 blessings
-pytest
-pytest-pep8
-pytest-cov
