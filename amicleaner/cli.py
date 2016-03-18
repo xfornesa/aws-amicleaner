@@ -12,10 +12,10 @@ from resources.models import AMI, AWSEC2Instance
 def fetch_available_amis():
     """ Retrieve from your aws account your custom AMIs using dry run """
 
-    client = boto3.client('ec2')
+    ec2 = boto3.client('ec2')
     amis = dict()
 
-    my_custom_images = client.describe_images(Owners=['self'])
+    my_custom_images = ec2.describe_images(Owners=['self'])
     for image_json in my_custom_images.get('Images'):
         ami = AMI.object_with_json(image_json)
         amis[ami.id] = ami
@@ -26,7 +26,7 @@ def fetch_available_amis():
 def fetch_running_instances():
     """ Retrieve from your aws account your running ec2 instances """
 
-    client = boto3.client('ec2')
+    ec2 = boto3.client('ec2')
     ec2_instances = dict()
 
     '''
@@ -34,7 +34,7 @@ def fetch_running_instances():
     available instances
     '''
 
-    my_running_instances = client.describe_instances()
+    my_running_instances = ec2.describe_instances()
     for reservation in my_running_instances.get("Reservations", []):
         for instance_json in reservation.get("Instances", []):
             ec2_instance = AWSEC2Instance.object_with_json(instance_json)
@@ -160,8 +160,41 @@ def tags_values_to_string(tags, filters=None):
     return ".".join(sorted(tag_values))
 
 
-def report_only():
-    pass
+def deregister_amis_from_ids(ami_ids):
+
+    ec2 = boto3.client('ec2')
+    my_custom_images = ec2.describe_images(
+        Owners=['self'],
+        ImageIds=ami_ids
+    )
+    amis = dict()
+    for image_json in my_custom_images.get('Images'):
+        ami = AMI.object_with_json(image_json)
+        amis[ami.id] = ami
+
+    if not my_custom_images:
+        print TERM.red("not images found\n")
+        sys.exit(1)
+    else:
+        deregister_amis(amis.values())
+
+
+def deregister_amis(amis):
+
+        """ This function deregister a array of given amis """
+
+        ec2 = boto3.client('ec2')
+
+        amis = amis or []
+        for ami in amis:
+            ec2.deregister_image(ImageId=ami.id)
+            print "ami {0} deregistered".format(ami.id)
+            for block_device in ami.block_device_mappings:
+                print "deleting snapshot {0}: {1}".format(
+                    ami.id,
+                    block_device.snapshot_id
+                )
+                ec2.delete_snapshot(SnapshotId=block_device.snapshot_id)
 
 
 def configure_args_parser():
@@ -169,11 +202,18 @@ def configure_args_parser():
                                                  'AWS account. Your AWS '
                                                  'credentials must be sourced')
 
-    parser.add_argument("--report-only", dest='report_only',
-                        action="store_true",
-                        help="Just print a report of what to be cleaned")
+    parser.add_argument("--from-ids",
+                        dest='from_ids',
+                        nargs='+',
+                        help="AMI id you simply want to remove")
 
-    parser.add_argument("--grouping-key", dest='grouping_key',
+    parser.add_argument("--full-report",
+                        dest='full_report',
+                        action="store_true",
+                        help="Prints a full report of what to be cleaned")
+
+    parser.add_argument("--grouping-key",
+                        dest='grouping_key',
                         help="How to regroup AMIs : [name|tags]")
 
     parser.add_argument("--grouping-values",
@@ -181,7 +221,9 @@ def configure_args_parser():
                         nargs='+',
                         help="List of values for tags or name")
 
-    parser.add_argument("--keep-previous", dest='keep_previous',
+    parser.add_argument("--keep-previous",
+                        dest='keep_previous',
+                        type=int,
                         help="Number of previous AMI to keep excluding those"
                              "currently being running")
 
@@ -195,67 +237,71 @@ def configure_args_parser():
 
 
 def main():
+
     """ main entry point for cli """
 
     args = configure_args_parser()
 
-
     # defaults
     grouping_key = args.grouping_key or GROUPING_KEY
     grouping_values = args.grouping_values or GROUPING_VALUES
-    keep_previous = int(args.keep_previous) or KEEP_PREVIOUS
+    keep_previous = args.keep_previous or KEEP_PREVIOUS
 
-    # print defaults
-    print TERM.bold("Default values : ==>")
-    print TERM.green("grouping_key : {0}".format(grouping_key))
-    print TERM.green("grouping_values : {0}".format(grouping_values))
-    print TERM.green("keep_previous : {0}".format(keep_previous))
+    if args.from_ids:
+        deregister_amis_from_ids(args.from_ids)
+    else:
 
-    print TERM.bold("\nRetrieving AMIs to clean ...")
-    # retrieving unused amis
-    unused_amis = filter_unused_amis(
-        fetch_available_amis(),
-        fetch_running_instances()
-    )
+        # print defaults
+        print TERM.bold("Default values : ==>")
+        print TERM.green("grouping_key : {0}".format(grouping_key))
+        print TERM.green("grouping_values : {0}".format(grouping_values))
+        print TERM.green("keep_previous : {0}".format(keep_previous))
 
-    # map
-    mapped_amis = apply_grouping_strategy(
-        unused_amis,
-        {"key": grouping_key, "values": grouping_values}
-    )
-    reduced_amis = dict()
+        print TERM.bold("\nRetrieving AMIs to clean ...")
+        # retrieving unused amis
+        unused_amis = filter_unused_amis(
+            fetch_available_amis(),
+            fetch_running_instances()
+        )
 
-    # reduce
-    for group_name, amis in mapped_amis.iteritems():
+        # map
+        mapped_amis = apply_grouping_strategy(
+            unused_amis,
+            {"key": grouping_key, "values": grouping_values}
+        )
+        reduced_amis = dict()
 
-        group_name = group_name or ""
-        if not group_name:
-            reduced_amis["no-tags"] = amis
-        else:
-            filtered = apply_rotation_strategy(amis, keep_previous)
-            if filtered:
-                reduced_amis[group_name] = filtered
+        # reduce
+        for group_name, amis in mapped_amis.iteritems():
 
-    # print results
-    groups_table = PrettyTable(["Group name", "AMI count"])
+            group_name = group_name or ""
+            if not group_name:
+                reduced_amis["no-tags"] = amis
+            else:
+                filtered = apply_rotation_strategy(amis, keep_previous)
+                if filtered:
+                    reduced_amis[group_name] = filtered
 
-    for group_name, amis in reduced_amis.iteritems():
-        groups_table.add_row([group_name, len(amis)])
-        eligible_amis_table = PrettyTable(["AMI ID", "AMI Name", "Creation Date"])
-        for ami in amis:
-            eligible_amis_table.add_row([
-                ami.id,
-                ami.name,
-                ami.creation_date
-            ])
-        print group_name
-        print eligible_amis_table.get_string(sortby="AMI Name"), "\n\n"
+        # print results
+        groups_table = PrettyTable(["Group name", "candidates"])
 
-    print "summary"
-    print groups_table.get_string(sortby="Group name")
+        for group_name, amis in reduced_amis.iteritems():
+            groups_table.add_row([group_name, len(amis)])
+            eligible_amis_table = PrettyTable(
+                ["AMI ID", "AMI Name", "Creation Date"]
+            )
+            for ami in amis:
+                eligible_amis_table.add_row([
+                    ami.id,
+                    ami.name,
+                    ami.creation_date
+                ])
+            if args.full_report:
+                print group_name
+                print eligible_amis_table.get_string(sortby="AMI Name"), "\n\n"
 
-    if args.report_only:
-        report_only()
+        print "AMIs to be removed:"
+        print groups_table.get_string(sortby="Group name")
 
 
 if __name__ == "__main__":
