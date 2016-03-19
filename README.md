@@ -30,5 +30,36 @@ export AWS_SECRET_ACCESS_KEY='with token AWS Secret'
 or with `awscli` :
 
 ```bash
-export AWS_PROFILE=aa-prod
+export AWS_PROFILE=profile-name
+```
+
+## How does it work ?
+
+### Getting help
+
+```bash
+amicleaner/cli.py --help
+```
+
+### Clean a list of AMIs
+
+```bash
+amicleaner/cli.py --from-ids ami-abcdef01 ami-abcdef02
+```
+
+### Fetch and clean
+
+Print report of groups and amis to be cleaned
+```bash
+amicleaner/cli.py --full-report
+```
+
+Keep previous number of AMIs
+```bash
+amicleaner/cli.py --full-report --keep-previous 10
+```
+
+Regroup by name or tags
+```bash
+amicleaner/cli.py --grouping-key tags --grouping-values role env
 ```
