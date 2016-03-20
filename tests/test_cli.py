@@ -87,6 +87,10 @@ def test_tags_values_to_string():
     assert tags_values_string == "Value2.Value3"
 
 
+def test_tags_values_to_string_with_none():
+    assert tags_values_to_string(None) is None
+
+
 def test_tags_values_to_string_without_filters():
     first_tag = AWSTag()
     first_tag.key = "Key1"
