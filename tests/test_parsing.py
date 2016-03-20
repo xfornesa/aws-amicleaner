@@ -61,6 +61,7 @@ def test_get_ami_from_json():
         assert ami.id == "ami-02197662"
         assert ami.virtualization_type == "hvm"
         assert ami.name == "custom-debian-201511040131"
+        assert repr(ami) == "AMI: ami-02197662 2015-11-04T01:35:31.000Z"
         assert ami.tags[0].value is not None
         assert ami.tags[0].value is not None
         assert len(ami.tags) == 2

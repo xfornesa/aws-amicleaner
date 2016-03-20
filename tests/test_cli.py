@@ -1,27 +1,24 @@
-from datetime import datetime, date
+import json
+
+from datetime import datetime
 from moto import mock_ec2
 
-from amicleaner.cli import fetch_available_amis, fetch_running_instances
-from amicleaner.cli import filter_unused_amis, apply_grouping_strategy
-from amicleaner.cli import tags_values_to_string, apply_rotation_strategy
+from amicleaner.cli import AMICleaner, parse_args, fetch_and_prepare
+from amicleaner.cli import print_report
 from amicleaner.resources.models import AMI, AWSEC2Instance, AWSTag
 
 
 @mock_ec2
 def test_fetch_available_amis():
-    assert fetch_available_amis() == {}
+    assert AMICleaner().fetch_available_amis() == {}
 
 
 @mock_ec2
-def test_fetch_running_instances():
-    assert fetch_running_instances() == {}
+def test_fetch_instances():
+    assert AMICleaner().fetch_instances() == {}
 
 
-def test_filter_unused_amis_with_null_arguments():
-    assert filter_unused_amis() == {}
-
-
-def test_filter_unused_amis():
+def test_fetch_candidates():
     # creating tests objects
     first_ami = AMI()
     first_ami.id = 'ami-28c2b348'
@@ -53,13 +50,13 @@ def test_filter_unused_amis():
     instances_dict[second_instance.image_id] = second_instance
 
     # testing filter
-    unused_ami_dict = filter_unused_amis(amis_dict, instances_dict)
+    unused_ami_dict = AMICleaner().fetch_candidates(amis_dict, instances_dict)
     assert len(unused_ami_dict) == 1
     assert amis_dict.get('unused-ami') is not None
 
 
-def test_apply_grouping_strategy_with_null_arguments():
-    assert apply_grouping_strategy({}, {}) == {}
+def test_map_candidates_with_null_arguments():
+    assert AMICleaner().map_candidates({}, {}) == {}
 
 
 def test_tags_values_to_string():
@@ -82,13 +79,13 @@ def test_tags_values_to_string():
     tags = [first_tag, third_tag, second_tag, fourth_tag]
     filters = ["Key2", "Key3"]
 
-    tags_values_string = tags_values_to_string(tags, filters)
+    tags_values_string = AMICleaner.tags_values_to_string(tags, filters)
     assert tags_values_string is not None
     assert tags_values_string == "Value2.Value3"
 
 
 def test_tags_values_to_string_with_none():
-    assert tags_values_to_string(None) is None
+    assert AMICleaner.tags_values_to_string(None) is None
 
 
 def test_tags_values_to_string_without_filters():
@@ -107,13 +104,12 @@ def test_tags_values_to_string_without_filters():
     tags = [first_tag, third_tag, second_tag]
     filters = []
 
-    tags_values_string = tags_values_to_string(tags, filters)
+    tags_values_string = AMICleaner.tags_values_to_string(tags, filters)
     assert tags_values_string is not None
     assert tags_values_string == "Value1.Value2.Value3"
 
 
-def test_apply_grouping_strategy_with_names():
-
+def test_map_with_names():
     # creating tests objects
     first_ami = AMI()
     first_ami.id = 'ami-28c2b348'
@@ -131,21 +127,18 @@ def test_apply_grouping_strategy_with_names():
     third_ami.creation_date = datetime.now()
 
     # creating amis to drop dict
-    unused_ami = dict()
-    unused_ami[first_ami.id] = first_ami
-    unused_ami[second_ami.id] = second_ami
-    unused_ami[third_ami.id] = third_ami
+    candidates = [first_ami, second_ami, third_ami]
 
     # grouping strategy
     grouping_strategy = {"key": "name", "values": ["ubuntu", "debian"]}
-    grouped_amis = apply_grouping_strategy(unused_ami, grouping_strategy)
+
+    grouped_amis = AMICleaner().map_candidates(candidates, grouping_strategy)
     assert grouped_amis is not None
     assert len(grouped_amis.get('ubuntu')) == 2
     assert len(grouped_amis.get('debian')) == 1
 
 
-def test_apply_grouping_strategy_with_tags():
-
+def test_map_with_tags():
     # tags
     stack_tag = AWSTag()
     stack_tag.key = "stack"
@@ -180,20 +173,17 @@ def test_apply_grouping_strategy_with_tags():
     third_ami.creation_date = datetime.now()
 
     # creating amis to drop dict
-    unused_ami = dict()
-    unused_ami[first_ami.id] = first_ami
-    unused_ami[second_ami.id] = second_ami
-    unused_ami[third_ami.id] = third_ami
+    candidates = [first_ami, second_ami, third_ami]
 
     # grouping strategy
     grouping_strategy = {"key": "tags", "values": ["stack", "env"]}
-    grouped_amis = apply_grouping_strategy(unused_ami, grouping_strategy)
+    grouped_amis = AMICleaner().map_candidates(candidates, grouping_strategy)
     assert grouped_amis is not None
     assert len(grouped_amis.get("prod")) == 1
     assert len(grouped_amis.get("prod.web-server")) == 2
 
 
-def test_apply_rotation_strategy_without_rotation_number():
+def test_reduce_without_rotation_number():
     # creating tests objects
     first_ami = AMI()
     first_ami.id = 'ami-28c2b348'
@@ -213,12 +203,12 @@ def test_apply_rotation_strategy_without_rotation_number():
     third_ami.creation_date = datetime(2016, 1, 12)
 
     # creating amis to drop dict
-    unused_ami = [second_ami, third_ami, first_ami]
+    candidates = [second_ami, third_ami, first_ami]
 
-    assert apply_rotation_strategy(unused_ami) == unused_ami
+    assert AMICleaner().reduce_candidates(candidates) == candidates
 
 
-def test_apply_rotation_strategy():
+def test_reduce():
     # creating tests objects
     first_ami = AMI()
     first_ami.id = 'ami-28c2b348'
@@ -238,19 +228,79 @@ def test_apply_rotation_strategy():
     third_ami.creation_date = datetime(2016, 1, 12)
 
     # keep 2 recent amis
-    unused_ami = [second_ami, third_ami, first_ami]
+    candidates = [second_ami, third_ami, first_ami]
     rotation_number = 2
-    left = apply_rotation_strategy(unused_ami, rotation_number)
+    cleaner = AMICleaner()
+    left = cleaner.reduce_candidates(candidates, rotation_number)
     assert len(left) == 1
     assert left[0].id == first_ami.id
 
     # keep 1 recent ami
     rotation_number = 1
-    left = apply_rotation_strategy(unused_ami, rotation_number)
+    left = cleaner.reduce_candidates(candidates, rotation_number)
     assert len(left) == 2
     assert left[0].id == second_ami.id
 
     # keep 5 recent amis
     rotation_number = 5
-    left = apply_rotation_strategy(unused_ami, rotation_number)
+    left = cleaner.reduce_candidates(candidates, rotation_number)
     assert len(left) == 0
+
+
+@mock_ec2
+def test_remove_ami():
+    cleaner = AMICleaner()
+
+    with open("tests/mocks/ami.json") as mock_file:
+        json_to_parse = json.load(mock_file)
+        ami = AMI.object_with_json(json_to_parse)
+
+        assert cleaner.remove_amis(None) is True
+        # assert cleaner.remove_amis([ami]) is True
+
+
+@mock_ec2
+def test_remove_ami_from_ids():
+    cleaner = AMICleaner()
+    assert cleaner.remove_amis_from_ids(None) is False
+    # assert cleaner.remove_amis_from_ids(["ami-02197662"]) is True
+
+
+def test_parse_args_no_args():
+    parser = parse_args([])
+    assert parser.force_delete is None
+    assert parser.from_ids is None
+    assert parser.from_ids is None
+    assert parser.full_report is False
+    assert parser.mapping_key is None
+    assert parser.mapping_values is None
+    assert parser.keep_previous is None
+
+
+def test_parse_args():
+    parser = parse_args(['--keep-previous', '10', '--full-report'])
+    assert parser.keep_previous == 10
+    assert parser.full_report is True
+
+    parser = parse_args(['--mapping-key', 'name'])
+    assert parser is None
+
+    parser = parse_args(['--mapping-key', 'tags',
+                         '--mapping-values', 'group1', 'group2'])
+    assert parser.mapping_key == "tags"
+    assert len(parser.mapping_values) == 2
+
+
+@mock_ec2
+def test_fetch_and_prepare():
+    assert fetch_and_prepare({}, 0) is None
+
+
+def test_print_report():
+    assert print_report({}) is None
+
+    with open("tests/mocks/ami.json") as mock_file:
+        json_to_parse = json.load(mock_file)
+        ami = AMI.object_with_json(json_to_parse)
+        candidates = {'test': [ami]}
+        assert print_report(candidates) is None

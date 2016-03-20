@@ -61,5 +61,5 @@ amicleaner/cli.py --full-report --keep-previous 10
 
 Regroup by name or tags
 ```bash
-amicleaner/cli.py --grouping-key tags --grouping-values role env
+amicleaner/cli.py --mapping-key tags --mapping-values role env
 ```
