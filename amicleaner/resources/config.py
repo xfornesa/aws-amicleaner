@@ -18,7 +18,7 @@ KEEP_PREVIOUS = 4
 # tags : with keys provided in GROUPING_STRATEGY_TAGS_KEYS, it filters AMI tags
 #        ex: ["Role", "Env"] => ["ubuntu-20160122"]
 #
-GROUPING_KEY = "tags"
+MAPPING_KEY = "tags"
 
 
-GROUPING_VALUES = ["environment", "role"]
+MAPPING_VALUES = ["environment", "role"]
