@@ -28,8 +28,9 @@ class AMICleaner:
         :param amis: array of AMI objects
         """
 
-        amis = amis or []
-        for ami in amis:
+        amis = amis or {}
+        for ami in amis.values():
+            print ami
             self.ec2.deregister_image(ImageId=ami.id)
             print "{0} deregistered".format(ami.id)
             for block_device in ami.block_device_mappings:
@@ -46,14 +47,12 @@ class AMICleaner:
         """
         takes a list of AMI ids, verify on aws and removes them
         :param ami_ids: array of AMI ids
-        :return:
         """
 
         if not ami_ids:
             return False
 
-        ec2 = boto3.client('ec2')
-        my_custom_images = ec2.describe_images(
+        my_custom_images = self.ec2.describe_images(
             Owners=['self'],
             ImageIds=ami_ids
         )
@@ -317,7 +316,7 @@ def delete_amis(candidates, from_ids=False):
     """ delete candidates AMIs and related snapshots """
 
     if from_ids:
-        print TERM.bold("\nCleaning from {} AMI ids ...".format(
+        print TERM.bold("\nCleaning from {} AMI id(s) ...".format(
             len(candidates))
         )
         AMICleaner().remove_amis_from_ids(candidates)
