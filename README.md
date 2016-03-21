@@ -15,7 +15,6 @@ It can simply remove AMIs with a list of provided ids !
 ## Prerequisites
 
 -   [awscli](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
--   [terraform](https://terraform.io/intro/getting-started/install.html)
 -   [python 2.7](https://www.python.org/downloads/release/python-2710/)
 -   [pyhton pip](https://pip.pypa.io/en/stable/installing/)
 
