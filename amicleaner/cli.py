@@ -345,8 +345,8 @@ def main():
     else:
         # print defaults
         print TERM.bold("Default values : ==>")
-        print TERM.green("grouping_key : {0}".format(mapping_key))
-        print TERM.green("grouping_values : {0}".format(mapping_values))
+        print TERM.green("mapping_key : {0}".format(mapping_key))
+        print TERM.green("mapping_values : {0}".format(mapping_values))
         print TERM.green("keep_previous : {0}".format(keep_previous))
 
         mapping_strategy = {"key": mapping_key, "values": mapping_values}
