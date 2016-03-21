@@ -62,3 +62,12 @@ Regroup by name or tags
 ```bash
 amicleaner/cli.py --mapping-key tags --mapping-values role env
 ```
+
+### Using virtual env
+
+```bash
+$ virtualenv env
+$ . env/bin/activate
+ (env) aws-amicleaner $ pip install -r requirements.txt
+ (env) aws-amicleaner $ amicleaner/cli.py
+```
