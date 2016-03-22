@@ -239,9 +239,9 @@ def parse_args(args):
                         help="Number of previous AMI to keep excluding those"
                              "currently being running")
 
-    parser.add_argument("--force-delete",
+    parser.add_argument("-f", "--force-delete",
                         dest='force_delete',
-                        type=int,
+                        action="store_true",
                         help="Skip confirmation")
 
     parsed_args = parser.parse_args(args)
