@@ -71,3 +71,7 @@ $ . env/bin/activate
  (env) aws-amicleaner $ pip install -r requirements.txt
  (env) aws-amicleaner $ amicleaner/cli.py
 ```
+
+## Contributing
+
+Issues reporting and pull requests are welcomed !
