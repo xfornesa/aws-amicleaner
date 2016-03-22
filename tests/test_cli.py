@@ -268,7 +268,7 @@ def test_remove_ami_from_ids():
 
 def test_parse_args_no_args():
     parser = parse_args([])
-    assert parser.force_delete is None
+    assert parser.force_delete is False
     assert parser.from_ids is None
     assert parser.from_ids is None
     assert parser.full_report is False
