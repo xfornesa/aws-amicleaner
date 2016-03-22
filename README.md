@@ -34,6 +34,31 @@ export AWS_PROFILE=profile-name
 
 ## How does it work ?
 
+To run the script properly, your `aws` user must have at least
+these permissions in `iam`:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Stmt1458638250000",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DeleteSnapshot",
+                "ec2:DeregisterImage",
+                "ec2:DescribeImages",
+                "ec2:DescribeInstances",
+                "ec2:DescribeSnapshots"
+            ],
+            "Resource": [
+                "arn:aws:ec2:::*"
+            ]
+        }
+    ]
+}
+```
+
 ### Getting help
 
 ```bash
