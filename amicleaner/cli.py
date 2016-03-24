@@ -361,7 +361,9 @@ def main():
         if not args.force_delete:
             answer = raw_input("Do you want to continue and remove {} AMIs "
                                "[y/N] ? : ".format(len(candidates)))
-            delete = (answer == "y")
+            delete = (answer.lower() == "y")
+        else:
+            delete = True
 
         if delete:
             delete_amis(candidates)
