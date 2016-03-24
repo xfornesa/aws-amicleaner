@@ -28,8 +28,8 @@ class AMICleaner:
         :param amis: array of AMI objects
         """
 
-        amis = amis or {}
-        for ami in amis.values():
+        amis = amis or []
+        for ami in amis:
             print ami
             self.ec2.deregister_image(ImageId=ami.id)
             print "{0} deregistered".format(ami.id)
