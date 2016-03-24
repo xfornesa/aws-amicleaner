@@ -88,6 +88,11 @@ Regroup by name or tags
 amicleaner/cli.py --mapping-key tags --mapping-values role env
 ```
 
+Skip confirmation, can be useful for automation
+```bash
+amicleaner/cli.py -f --keep-previous 2
+```
+
 ### Using virtual env
 
 ```bash
