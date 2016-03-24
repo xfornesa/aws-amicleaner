@@ -56,10 +56,10 @@ class AMICleaner:
             Owners=['self'],
             ImageIds=ami_ids
         )
-        amis = dict()
+        amis = []
         for image_json in my_custom_images.get('Images'):
             ami = AMI.object_with_json(image_json)
-            amis[ami.id] = ami
+            amis.append(ami)
 
         self.remove_amis(amis)
 
