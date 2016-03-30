@@ -30,15 +30,11 @@ class AMICleaner:
 
         amis = amis or []
         for ami in amis:
-            print ami
             self.ec2.deregister_image(ImageId=ami.id)
             print "{0} deregistered".format(ami.id)
             for block_device in ami.block_device_mappings:
                 self.ec2.delete_snapshot(SnapshotId=block_device.snapshot_id)
-                print "snapshot {0} / {1} deleted".format(
-                    ami.id,
-                    block_device.snapshot_id
-                )
+                print "{0} deleted\n".format(block_device.snapshot_id)
 
         return True
 
