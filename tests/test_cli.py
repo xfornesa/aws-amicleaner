@@ -255,8 +255,7 @@ def test_remove_ami():
         json_to_parse = json.load(mock_file)
         ami = AMI.object_with_json(json_to_parse)
 
-        assert cleaner.remove_amis(None) is True
-        # assert cleaner.remove_amis([ami]) is True
+        assert cleaner.remove_amis(None) is None
 
 
 @mock_ec2
