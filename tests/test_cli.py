@@ -247,16 +247,8 @@ def test_reduce():
     assert len(left) == 0
 
 
-@mock_ec2
-def test_remove_ami():
-    cleaner = AMICleaner()
-
-    with open("tests/mocks/ami.json") as mock_file:
-        json_to_parse = json.load(mock_file)
-        ami = AMI.object_with_json(json_to_parse)
-
-        assert cleaner.remove_amis(None) is None
-
+def test_remove_ami_from_none():
+    assert AMICleaner().remove_amis(None) is None
 
 @mock_ec2
 def test_remove_ami_from_ids():
