@@ -9,7 +9,7 @@ from resources.config import TERM
 from resources.models import AMI, AWSEC2Instance
 
 
-class AMICleaner:
+class AMICleaner(object):
 
     def __init__(self):
         self.ec2 = boto3.client('ec2')
