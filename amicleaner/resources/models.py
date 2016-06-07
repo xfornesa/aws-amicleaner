@@ -105,10 +105,7 @@ class AWSEC2Instance:
         o.subnet_id = json.get('SubnetId')
         o.instance_type = json.get('InstanceType')
         o.availability_zone = json.get('Placement').get('AvailabilityZone')
-
-        for tag in json.get('Tags'):
-            aws_tag = AWSTag.object_with_json(tag)
-            o.tags.append(aws_tag)
+        o.tags = [AWSTag.object_with_json(tag) for tag in json.get('Tags', [])]
 
         return o
 
