@@ -104,4 +104,4 @@ $ . env/bin/activate
 
 ## Contributing
 
-Issues reporting and pull requests are welcomed !
+Issues reporting and pull requests are welcome !
