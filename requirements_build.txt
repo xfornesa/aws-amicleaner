@@ -1,6 +1,9 @@
 boto
+blessings
+codecov
+boto3
 moto
+prettytable
 pytest
 pytest-pep8
 pytest-cov
-codecov
