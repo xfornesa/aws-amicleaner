@@ -352,6 +352,9 @@ def main():
             args.full_report
         )
 
+        if not candidates:
+            sys.exit(0)
+
         delete = False
 
         if not args.force_delete:
