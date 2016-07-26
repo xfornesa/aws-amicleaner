@@ -9,7 +9,6 @@ from resources.config import TERM
 from resources.models import AMI, AWSEC2Instance
 
 
-class AMICleaner(object):
 
     def __init__(self):
         self.ec2 = boto3.client('ec2')
@@ -307,9 +306,9 @@ def print_report(candidates, full_report=False):
     print groups_table.get_string(sortby="Group name")
 
 
-def delete_amis(candidates, from_ids=False):
+def prepare_delete_amis(candidates, from_ids=False):
 
-    """ delete candidates AMIs and related snapshots """
+    """ prepare deletion of candidates AMIs"""
 
     if from_ids:
         print TERM.bold("\nCleaning from {} AMI id(s) ...".format(
@@ -336,7 +335,7 @@ def main():
     keep_previous = args.keep_previous or KEEP_PREVIOUS
 
     if args.from_ids:
-        delete_amis(args.from_ids, True)
+        prepare_delete_amis(args.from_ids, True)
     else:
         # print defaults
         print TERM.bold("Default values : ==>")
@@ -365,7 +364,7 @@ def main():
             delete = True
 
         if delete:
-            delete_amis(candidates)
+            prepare_delete_amis(candidates)
 
 
 if __name__ == "__main__":
