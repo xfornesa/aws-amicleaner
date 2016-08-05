@@ -270,7 +270,7 @@ def test_parse_args_no_args():
     assert parser.full_report is False
     assert parser.mapping_key is None
     assert parser.mapping_values is None
-    assert parser.keep_previous is None
+    assert parser.keep_previous is 4
 
 
 def test_parse_args():

@@ -242,6 +242,7 @@ def parse_args(args):
     parser.add_argument("--keep-previous",
                         dest='keep_previous',
                         type=int,
+                        default=KEEP_PREVIOUS,
                         help="Number of previous AMI to keep excluding those"
                              "currently being running")
 
@@ -357,7 +358,7 @@ def main():
     # defaults
     mapping_key = args.mapping_key or MAPPING_KEY
     mapping_values = args.mapping_values or MAPPING_VALUES
-    keep_previous = args.keep_previous or KEEP_PREVIOUS
+    keep_previous = args.keep_previous
 
     if args.from_ids:
         prepare_delete_amis(args.from_ids, True)
@@ -372,7 +373,7 @@ def main():
 
         candidates = fetch_and_prepare(
             mapping_strategy,
-            keep_previous,
+            args.keep_previous,
             args.full_report
         )
 
