@@ -1,14 +1,17 @@
 #!/usr/bin/env python
-import boto3
 import argparse
 import sys
 
+import boto3
+from botocore.exceptions import ClientError
 from prettytable import PrettyTable
+
 from resources.config import MAPPING_KEY, MAPPING_VALUES, KEEP_PREVIOUS
 from resources.config import TERM
 from resources.models import AMI, AWSEC2Instance
 
 
+class AMICleaner:
 
     def __init__(self):
         self.ec2 = boto3.client('ec2')
@@ -27,13 +30,23 @@ from resources.models import AMI, AWSEC2Instance
         :param amis: array of AMI objects
         """
 
+        failed_snapshots = list()
+
         amis = amis or []
         for ami in amis:
             self.ec2.deregister_image(ImageId=ami.id)
             print "{0} deregistered".format(ami.id)
             for block_device in ami.block_device_mappings:
-                self.ec2.delete_snapshot(SnapshotId=block_device.snapshot_id)
+                try:
+                    self.ec2.delete_snapshot(
+                        SnapshotId=block_device.snapshot_id
+                    )
+                except ClientError:
+                    failed_snapshots.append(block_device.snapshot_id)
                 print "{0} deleted\n".format(block_device.snapshot_id)
+
+        if failed_snapshots:
+            print_failed_snapshots(failed_snapshots)
 
         return True
 
@@ -56,9 +69,7 @@ from resources.models import AMI, AWSEC2Instance
             ami = AMI.object_with_json(image_json)
             amis.append(ami)
 
-        self.remove_amis(amis)
-
-        return True
+        return self.remove_amis(amis)
 
     def fetch_available_amis(self):
 
@@ -280,7 +291,8 @@ def fetch_and_prepare(mapping_strategy, keep_previous, full_report=False):
 
 
 def print_report(candidates, full_report=False):
-    # print results
+
+    """ Print results """
 
     if not candidates:
         return
@@ -304,6 +316,19 @@ def print_report(candidates, full_report=False):
 
     print "\nAMIs to be removed:"
     print groups_table.get_string(sortby="Group name")
+
+
+def print_failed_snapshots(failed_snapshots):
+
+    """ Print failed snapshots """
+
+    snap_table = PrettyTable()
+    snap_table.field_names = ["Failed Snapshots"]
+
+    for failed_snap in failed_snapshots:
+        snap_table.add_row(failed_snap)
+    print "\nFailed Snapshots:"
+    print snap_table
 
 
 def prepare_delete_amis(candidates, from_ids=False):
