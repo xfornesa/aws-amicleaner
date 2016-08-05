@@ -1,9 +1,11 @@
 #!/usr/bin/env python
-import boto3
 import argparse
 import sys
 
+import boto3
+from botocore.exceptions import ClientError
 from prettytable import PrettyTable
+
 from resources.config import MAPPING_KEY, MAPPING_VALUES, KEEP_PREVIOUS
 from resources.config import TERM
 from resources.models import AMI, AWSEC2Instance
@@ -28,13 +30,23 @@ class AMICleaner:
         :param amis: array of AMI objects
         """
 
+        failed_snapshots = list()
+
         amis = amis or []
         for ami in amis:
             self.ec2.deregister_image(ImageId=ami.id)
             print "{0} deregistered".format(ami.id)
             for block_device in ami.block_device_mappings:
-                self.ec2.delete_snapshot(SnapshotId=block_device.snapshot_id)
+                try:
+                    self.ec2.delete_snapshot(
+                        SnapshotId=block_device.snapshot_id
+                    )
+                except ClientError:
+                    failed_snapshots.append(block_device.snapshot_id)
                 print "{0} deleted\n".format(block_device.snapshot_id)
+
+        if failed_snapshots:
+            print_failed_snapshots(failed_snapshots)
 
         return True
 
@@ -57,9 +69,7 @@ class AMICleaner:
             ami = AMI.object_with_json(image_json)
             amis.append(ami)
 
-        self.remove_amis(amis)
-
-        return True
+        return self.remove_amis(amis)
 
     def fetch_available_amis(self):
 
@@ -232,6 +242,7 @@ def parse_args(args):
     parser.add_argument("--keep-previous",
                         dest='keep_previous',
                         type=int,
+                        default=KEEP_PREVIOUS,
                         help="Number of previous AMI to keep excluding those"
                              "currently being running")
 
@@ -281,7 +292,8 @@ def fetch_and_prepare(mapping_strategy, keep_previous, full_report=False):
 
 
 def print_report(candidates, full_report=False):
-    # print results
+
+    """ Print results """
 
     if not candidates:
         return
@@ -307,9 +319,22 @@ def print_report(candidates, full_report=False):
     print groups_table.get_string(sortby="Group name")
 
 
-def delete_amis(candidates, from_ids=False):
+def print_failed_snapshots(failed_snapshots):
 
-    """ delete candidates AMIs and related snapshots """
+    """ Print failed snapshots """
+
+    snap_table = PrettyTable()
+    snap_table.field_names = ["Failed Snapshots"]
+
+    for failed_snap in failed_snapshots:
+        snap_table.add_row(failed_snap)
+    print "\nFailed Snapshots:"
+    print snap_table
+
+
+def prepare_delete_amis(candidates, from_ids=False):
+
+    """ prepare deletion of candidates AMIs"""
 
     if from_ids:
         print TERM.bold("\nCleaning from {} AMI id(s) ...".format(
@@ -333,10 +358,10 @@ def main():
     # defaults
     mapping_key = args.mapping_key or MAPPING_KEY
     mapping_values = args.mapping_values or MAPPING_VALUES
-    keep_previous = args.keep_previous or KEEP_PREVIOUS
+    keep_previous = args.keep_previous
 
     if args.from_ids:
-        delete_amis(args.from_ids, True)
+        prepare_delete_amis(args.from_ids, True)
     else:
         # print defaults
         print TERM.bold("Default values : ==>")
@@ -348,7 +373,7 @@ def main():
 
         candidates = fetch_and_prepare(
             mapping_strategy,
-            keep_previous,
+            args.keep_previous,
             args.full_report
         )
 
@@ -365,7 +390,7 @@ def main():
             delete = True
 
         if delete:
-            delete_amis(candidates)
+            prepare_delete_amis(candidates)
 
 
 if __name__ == "__main__":
