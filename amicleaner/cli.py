@@ -216,14 +216,14 @@ class AMICleaner:
 
 
 def parse_args(args):
-    parser = argparse.ArgumentParser(description='Clean your AMI on your '
+    parser = argparse.ArgumentParser(description='Clean your AMIs on your '
                                                  'AWS account. Your AWS '
                                                  'credentials must be sourced')
 
     parser.add_argument("--from-ids",
                         dest='from_ids',
                         nargs='+',
-                        help="AMI id you simply want to remove")
+                        help="AMI id(s) you simply want to remove")
 
     parser.add_argument("--full-report",
                         dest='full_report',
