@@ -11,6 +11,14 @@ from resources.config import TERM
 from resources.models import AMI, AWSEC2Instance
 
 
+class OrphanedSnapshotCleaner:
+
+    """ Finds and removes ebs snapshots left orphaned """
+
+    def __init__(self):
+        self.ec2 = boto3.client('ec2')
+
+
 class AMICleaner:
 
     def __init__(self):
@@ -250,6 +258,11 @@ def parse_args(args):
                         dest='force_delete',
                         action="store_true",
                         help="Skip confirmation")
+
+    parser.add_argument("-o", "--clean-orphans",
+                        dest='clean_orphans',
+                        action="store_true",
+                        help="Clean orphaned snapshots")
 
     parsed_args = parser.parse_args(args)
     if parsed_args.mapping_key and not parsed_args.mapping_values:
