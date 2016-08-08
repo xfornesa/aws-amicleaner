@@ -323,11 +323,10 @@ def print_failed_snapshots(failed_snapshots):
 
     """ Print failed snapshots """
 
-    snap_table = PrettyTable()
-    snap_table.field_names = ["Failed Snapshots"]
+    snap_table = PrettyTable(["Failed Snapshots"])
 
     for failed_snap in failed_snapshots:
-        snap_table.add_row(failed_snap)
+        snap_table.add_row([failed_snap])
     print "\nFailed Snapshots:"
     print snap_table
 
