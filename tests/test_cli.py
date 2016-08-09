@@ -1,21 +1,14 @@
 import json
+import unittest
+import boto3
 
 from datetime import datetime
 from moto import mock_ec2
 
 from amicleaner.cli import AMICleaner, parse_args, fetch_and_prepare
-from amicleaner.cli import print_report
+from amicleaner.cli import prepare_delete_amis
+from amicleaner.cli import print_report, print_failed_snapshots
 from amicleaner.resources.models import AMI, AWSEC2Instance, AWSTag
-
-
-@mock_ec2
-def test_fetch_available_amis():
-    assert AMICleaner().fetch_available_amis() == {}
-
-
-@mock_ec2
-def test_fetch_instances():
-    assert AMICleaner().fetch_instances() == {}
 
 
 def test_fetch_candidates():
@@ -300,3 +293,65 @@ def test_print_report():
         ami = AMI.object_with_json(json_to_parse)
         candidates = {'test': [ami]}
         assert print_report(candidates) is None
+        assert print_report(candidates, full_report=True) is None
+
+
+def test_print_failed_snapshots():
+    assert print_failed_snapshots({}) is None
+    assert print_failed_snapshots(["ami-one", "ami-two"]) is None
+
+
+@mock_ec2
+def test_fetch_instances():
+    """ Tests fetch instances and AMIs """
+
+    base_ami = "ami-1234abcd"
+
+    conn = boto3.client('ec2')
+    reservation = conn.run_instances(
+        ImageId=base_ami, MinCount=1, MaxCount=1
+    )
+    instance = reservation["Instances"][0]
+    assert instance.get("ImageId") == base_ami
+
+    # Test fetch instances method
+    assert len(AMICleaner(conn).fetch_instances()) == 1
+
+
+@mock_ec2
+def test_deletion():
+    """ Test deletion methods """
+
+    base_ami = "ami-1234abcd"
+
+    conn = boto3.client('ec2')
+    reservation = conn.run_instances(
+        ImageId=base_ami, MinCount=1, MaxCount=1
+    )
+    instance = reservation["Instances"][0]
+
+    # create amis
+    images = []
+    for i in xrange(5):
+        image = conn.create_image(
+            InstanceId=instance.get("InstanceId"),
+            Name="test-ami"
+        )
+        images.append(image.get("ImageId"))
+
+    # delete one by id
+    assert len(AMICleaner(conn).fetch_available_amis()) == 5
+    assert prepare_delete_amis(candidates=[images[4]], from_ids=True) is None
+    assert len(AMICleaner(conn).fetch_available_amis()) == 4
+
+    # delete with mapping strategy
+    mapping_strategy = {"key": "name", "values": ["test-ami"]}
+
+    candidates = fetch_and_prepare(
+        mapping_strategy,
+        keep_previous=0,
+        full_report=False
+    )
+    assert len(candidates) == 4
+    assert prepare_delete_amis(candidates) is None
+    assert len(AMICleaner(conn).fetch_available_amis()) == 0

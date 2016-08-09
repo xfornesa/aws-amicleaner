@@ -21,8 +21,8 @@ class OrphanedSnapshotCleaner:
 
 class AMICleaner:
 
-    def __init__(self):
-        self.ec2 = boto3.client('ec2')
+    def __init__(self, ec2=None):
+        self.ec2 = ec2 or boto3.client('ec2')
 
     @staticmethod
     def get_ami_sorting_key(ami):
@@ -81,7 +81,7 @@ class AMICleaner:
 
     def fetch_available_amis(self):
 
-        """ Retrieve from your aws account your custom AMIs using dry run """
+        """ Retrieve from your aws account your custom AMIs"""
 
         available_amis = dict()
 
