@@ -90,8 +90,8 @@ class App:
 
         if confirm:
             print "Removing orphan snapshots... "
-            cleaner.clean(snaps[])
-            print "snapshots removed !"
+            count = cleaner.clean(snaps)
+            print "\n{0} orphan snapshots successfully removed !".format(count)
 
     def print_defaults(self):
 

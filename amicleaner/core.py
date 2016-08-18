@@ -53,14 +53,18 @@ class OrphanSnapshotCleaner:
         actually deletes the snapshots with an array
         of snapshots ids
         """
+        count = len(snapshots)
 
         snapshots = snapshots or []
 
-        for snap in snapshots[0:2]:
+        for snap in snapshots:
             try:
                 self.ec2.delete_snapshot(SnapshotId=snap)
             except ClientError as e:
                 self.log("{0} deletion failed : {1}".format(snap, e))
+                count -= 1
+
+        return count
 
     def log(self, msg):
         print msg
