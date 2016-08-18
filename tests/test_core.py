@@ -1,0 +1,256 @@
+import boto3
+from datetime import datetime
+from moto import mock_ec2
+
+from amicleaner.core import AMICleaner
+from amicleaner.resources.models import AMI, AWSEC2Instance, AWSTag
+
+
+def test_fetch_candidates():
+    # creating tests objects
+    first_ami = AMI()
+    first_ami.id = 'ami-28c2b348'
+    first_ami.creation_date = datetime.now()
+
+    first_instance = AWSEC2Instance()
+    first_instance.id = 'i-9f9f6a2a'
+    first_instance.name = "first-instance"
+    first_instance.image_id = first_ami.id
+    first_instance.launch_time = datetime.now()
+
+    second_ami = AMI()
+    second_ami.id = 'unused-ami'
+    second_ami.creation_date = datetime.now()
+
+    second_instance = AWSEC2Instance()
+    second_instance.id = 'i-9f9f6a2a'
+    second_instance.name = "second-instance"
+    second_instance.image_id = first_ami.id
+    second_instance.launch_time = datetime.now()
+
+    # constructing dicts
+    amis_dict = dict()
+    amis_dict[first_ami.id] = first_ami
+    amis_dict[second_ami.id] = second_ami
+
+    instances_dict = dict()
+    instances_dict[first_instance.image_id] = instances_dict
+    instances_dict[second_instance.image_id] = second_instance
+
+    # testing filter
+    unused_ami_dict = AMICleaner().fetch_candidates(amis_dict, instances_dict)
+    assert len(unused_ami_dict) == 1
+    assert amis_dict.get('unused-ami') is not None
+
+
+def test_map_candidates_with_null_arguments():
+    assert AMICleaner().map_candidates({}, {}) == {}
+
+
+def test_tags_values_to_string():
+    first_tag = AWSTag()
+    first_tag.key = "Key1"
+    first_tag.value = "Value1"
+
+    second_tag = AWSTag()
+    second_tag.key = "Key2"
+    second_tag.value = "Value2"
+
+    third_tag = AWSTag()
+    third_tag.key = "Key3"
+    third_tag.value = "Value3"
+
+    fourth_tag = AWSTag()
+    fourth_tag.key = "Key4"
+    fourth_tag.value = "Value4"
+
+    tags = [first_tag, third_tag, second_tag, fourth_tag]
+    filters = ["Key2", "Key3"]
+
+    tags_values_string = AMICleaner.tags_values_to_string(tags, filters)
+    assert tags_values_string is not None
+    assert tags_values_string == "Value2.Value3"
+
+
+def test_tags_values_to_string_with_none():
+    assert AMICleaner.tags_values_to_string(None) is None
+
+
+def test_tags_values_to_string_without_filters():
+    first_tag = AWSTag()
+    first_tag.key = "Key1"
+    first_tag.value = "Value1"
+
+    second_tag = AWSTag()
+    second_tag.key = "Key2"
+    second_tag.value = "Value2"
+
+    third_tag = AWSTag()
+    third_tag.key = "Key3"
+    third_tag.value = "Value3"
+
+    tags = [first_tag, third_tag, second_tag]
+    filters = []
+
+    tags_values_string = AMICleaner.tags_values_to_string(tags, filters)
+    assert tags_values_string is not None
+    assert tags_values_string == "Value1.Value2.Value3"
+
+
+def test_map_with_names():
+    # creating tests objects
+    first_ami = AMI()
+    first_ami.id = 'ami-28c2b348'
+    first_ami.name = "ubuntu-20160102"
+    first_ami.creation_date = datetime.now()
+
+    second_ami = AMI()
+    second_ami.id = 'ami-28c2b349'
+    second_ami.name = "ubuntu-20160103"
+    second_ami.creation_date = datetime.now()
+
+    third_ami = AMI()
+    third_ami.id = 'ami-28c2b350'
+    third_ami.name = "debian-20160104"
+    third_ami.creation_date = datetime.now()
+
+    # creating amis to drop dict
+    candidates = [first_ami, second_ami, third_ami]
+
+    # grouping strategy
+    grouping_strategy = {"key": "name", "values": ["ubuntu", "debian"]}
+
+    grouped_amis = AMICleaner().map_candidates(candidates, grouping_strategy)
+    assert grouped_amis is not None
+    assert len(grouped_amis.get('ubuntu')) == 2
+    assert len(grouped_amis.get('debian')) == 1
+
+
+def test_map_with_tags():
+    # tags
+    stack_tag = AWSTag()
+    stack_tag.key = "stack"
+    stack_tag.value = "web-server"
+
+    env_tag = AWSTag()
+    env_tag.key = "env"
+    env_tag.value = "prod"
+
+    # creating tests objects
+    # prod and web-server
+    first_ami = AMI()
+    first_ami.id = 'ami-28c2b348'
+    first_ami.name = "ubuntu-20160102"
+    first_ami.tags.append(stack_tag)
+    first_ami.tags.append(env_tag)
+    first_ami.creation_date = datetime.now()
+
+    # just prod
+    second_ami = AMI()
+    second_ami.id = 'ami-28c2b349'
+    second_ami.name = "ubuntu-20160103"
+    second_ami.tags.append(env_tag)
+    second_ami.creation_date = datetime.now()
+
+    # prod and web-server
+    third_ami = AMI()
+    third_ami.id = 'ami-28c2b350'
+    third_ami.name = "debian-20160104"
+    third_ami.tags.append(stack_tag)
+    third_ami.tags.append(env_tag)
+    third_ami.creation_date = datetime.now()
+
+    # creating amis to drop dict
+    candidates = [first_ami, second_ami, third_ami]
+
+    # grouping strategy
+    grouping_strategy = {"key": "tags", "values": ["stack", "env"]}
+    grouped_amis = AMICleaner().map_candidates(candidates, grouping_strategy)
+    assert grouped_amis is not None
+    assert len(grouped_amis.get("prod")) == 1
+    assert len(grouped_amis.get("prod.web-server")) == 2
+
+
+def test_reduce_without_rotation_number():
+    # creating tests objects
+    first_ami = AMI()
+    first_ami.id = 'ami-28c2b348'
+    first_ami.name = "ubuntu-20160102"
+    first_ami.creation_date = datetime(2016, 1, 10)
+
+    # just prod
+    second_ami = AMI()
+    second_ami.id = 'ami-28c2b349'
+    second_ami.name = "ubuntu-20160103"
+    second_ami.creation_date = datetime(2016, 1, 11)
+
+    # prod and web-server
+    third_ami = AMI()
+    third_ami.id = 'ami-28c2b350'
+    third_ami.name = "debian-20160104"
+    third_ami.creation_date = datetime(2016, 1, 12)
+
+    # creating amis to drop dict
+    candidates = [second_ami, third_ami, first_ami]
+
+    assert AMICleaner().reduce_candidates(candidates) == candidates
+
+
+def test_reduce():
+    # creating tests objects
+    first_ami = AMI()
+    first_ami.id = 'ami-28c2b348'
+    first_ami.name = "ubuntu-20160102"
+    first_ami.creation_date = datetime(2016, 1, 10)
+
+    # just prod
+    second_ami = AMI()
+    second_ami.id = 'ami-28c2b349'
+    second_ami.name = "ubuntu-20160103"
+    second_ami.creation_date = datetime(2016, 1, 11)
+
+    # prod and web-server
+    third_ami = AMI()
+    third_ami.id = 'ami-28c2b350'
+    third_ami.name = "debian-20160104"
+    third_ami.creation_date = datetime(2016, 1, 12)
+
+    # keep 2 recent amis
+    candidates = [second_ami, third_ami, first_ami]
+    rotation_number = 2
+    cleaner = AMICleaner()
+    left = cleaner.reduce_candidates(candidates, rotation_number)
+    assert len(left) == 1
+    assert left[0].id == first_ami.id
+
+    # keep 1 recent ami
+    rotation_number = 1
+    left = cleaner.reduce_candidates(candidates, rotation_number)
+    assert len(left) == 2
+    assert left[0].id == second_ami.id
+
+    # keep 5 recent amis
+    rotation_number = 5
+    left = cleaner.reduce_candidates(candidates, rotation_number)
+    assert len(left) == 0
+
+
+def test_remove_ami_from_none():
+    assert AMICleaner().remove_amis(None) == []
+
+
+@mock_ec2
+def test_fetch_instances():
+    """ Tests fetch instances and AMIs """
+
+    base_ami = "ami-1234abcd"
+
+    conn = boto3.client('ec2')
+    reservation = conn.run_instances(
+        ImageId=base_ami, MinCount=1, MaxCount=1
+    )
+    instance = reservation["Instances"][0]
+    assert instance.get("ImageId") == base_ami
+
+    # Test fetch instances method
+    assert len(AMICleaner(conn).fetch_instances()) == 1
