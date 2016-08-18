@@ -90,7 +90,8 @@ class App:
 
         if confirm:
             print "Removing orphan snapshots... "
-            cleaner.clean(snaps[:2])
+            cleaner.clean(snaps[])
+            print "snapshots removed !"
 
     def print_defaults(self):
 
