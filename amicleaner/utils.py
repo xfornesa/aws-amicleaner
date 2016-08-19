@@ -92,10 +92,10 @@ def parse_args(args):
                         action="store_true",
                         help="Skip confirmation")
 
-    parser.add_argument("--skip-orphans",
-                        dest='skip_orphans',
+    parser.add_argument("--check-orphans",
+                        dest='check_orphans',
                         action="store_true",
-                        help="Skip orphaned snapshots cleaning")
+                        help="Check and clean orphaned snapshots")
 
     parsed_args = parser.parse_args(args)
     if parsed_args.mapping_key and not parsed_args.mapping_values:

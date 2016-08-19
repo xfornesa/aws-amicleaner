@@ -14,7 +14,7 @@ class App:
         self.mapping_key = args.mapping_key or MAPPING_KEY
         self.mapping_values = args.mapping_values or MAPPING_VALUES
         self.keep_previous = args.keep_previous
-        self.skip_orphans = args.skip_orphans
+        self.check_orphans = args.check_orphans
         self.from_ids = args.from_ids
         self.full_report = args.full_report
         self.force_delete = args.force_delete
@@ -81,6 +81,9 @@ class App:
         cleaner = OrphanSnapshotCleaner()
         snaps = cleaner.fetch()
 
+        if not snaps:
+            return
+
         Printer.print_orphan_snapshots(snaps)
 
         answer = raw_input(
@@ -90,8 +93,8 @@ class App:
 
         if confirm:
             print "Removing orphan snapshots... "
-            cleaner.clean(snaps[])
-            print "snapshots removed !"
+            count = cleaner.clean(snaps)
+            print "\n{0} orphan snapshots successfully removed !".format(count)
 
     def print_defaults(self):
 
@@ -102,7 +105,7 @@ class App:
 
     def run_cli(self):
 
-        if not self.skip_orphans:
+        if self.check_orphans:
             self.clean_orphans()
 
         if self.from_ids:
