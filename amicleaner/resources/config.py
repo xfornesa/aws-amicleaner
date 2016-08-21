@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # set your aws env vars to production
 
 from blessings import Terminal

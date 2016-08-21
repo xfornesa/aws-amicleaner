@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import boto3
 from datetime import datetime
 from moto import mock_ec2
