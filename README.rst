@@ -17,9 +17,10 @@ You can either run in ``fetch and clean`` mode where the tool will
 retrieve all your private **AMIs** and EC2 instances, exclude AMIs being
 holded by your EC2 instances (it can be useful if you use autoscaling,
 and so on ...). It applies a filter based on their **names** or **tags**
-and a number of **previous AMIs** you want to keep.
+and a number of **previous AMIs** you want to keep. You can also check and
+delete EBS snapshots left orphaned by manual deletion of AMIs.
 
-It can simply remove AMIs with a list of provided ids !
+It can simply remove AMIs with a list of provided ids.
 
 Prerequisites
 -------------
@@ -44,8 +45,8 @@ or with ``awscli`` :
 
     export AWS_PROFILE=profile-name
 
-How does it work ?
-------------------
+Minimum AWS IAM permissions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To run the script properly, your ``aws`` user must have at least these
 permissions in ``iam``:
@@ -72,19 +73,39 @@ permissions in ``iam``:
         ]
     }
 
+Installation
+------------
+
+amicleaner is available on pypi and can be installed on your system
+
+From pypi
+~~~~~~~~~
+
+.. code:: bash
+
+    [sudo] pip install aws-amicleaner
+
+From source
+~~~~~~~~~~~
+
+You can also clone or download from github the source and install with pip
+
+.. code:: bash
+
+    cd aws-amicleaner/
+    pip install [--user] -e .
+
+Usage
+-----
+
+
 Getting help
 ~~~~~~~~~~~~
 
 .. code:: bash
 
-    amicleaner/cli.py --help
+    amicleaner --help
 
-Clean a list of AMIs
-~~~~~~~~~~~~~~~~~~~~
-
-.. code:: bash
-
-    amicleaner/cli.py --from-ids ami-abcdef01 ami-abcdef02
 
 Fetch and clean
 ~~~~~~~~~~~~~~~
@@ -93,35 +114,41 @@ Print report of groups and amis to be cleaned
 
 .. code:: bash
 
-    amicleaner/cli.py --full-report
+    amicleaner --full-report
 
 Keep previous number of AMIs
 
 .. code:: bash
 
-    amicleaner/cli.py --full-report --keep-previous 10
+    amicleaner --full-report --keep-previous 10
 
 Regroup by name or tags
 
 .. code:: bash
 
-    amicleaner/cli.py --mapping-key tags --mapping-values role env
+    amicleaner --mapping-key tags --mapping-values role env
 
 Skip confirmation, can be useful for automation
 
 .. code:: bash
 
-    amicleaner/cli.py -f --keep-previous 2
+    amicleaner -f --keep-previous 2
 
-Using virtual env
-~~~~~~~~~~~~~~~~~
+
+Activate orphan snapshots checking
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: bash
 
-    $ virtualenv env
-    $ . env/bin/activate
-     (env) aws-amicleaner $ pip install -r requirements.txt
-     (env) aws-amicleaner $ amicleaner/cli.py
+    amicleaner --check-orphans
+
+
+Delete a list of AMIs
+~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: bash
+
+    amicleaner --from-ids ami-abcdef01 ami-abcdef02
 
 
 .. |Circle CI| image:: https://circleci.com/gh/bonclay7/aws-amicleaner/tree/master.svg?style=svg

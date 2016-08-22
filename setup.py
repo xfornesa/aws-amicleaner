@@ -8,6 +8,8 @@ from amicleaner import __license__, __version__
 with open('README.rst') as readme_file:
     readme = readme_file.read()
 
+with open('HISTORY.rst') as history_file:
+    history = history_file.read()
 
 install_requirements = ['awscli', 'argparse', 'boto',
                         'boto3', 'prettytable', 'blessings']
@@ -19,7 +21,7 @@ setup(
     name='aws-amicleaner',
     version=__version__,
     description='Cleanup tool for AWS AMIs and snapshots',
-    long_description=readme, 
+    long_description=readme + "\n\n" + history,
     author=__author__,
     author_email=__author_email__,
     url='https://github.com/bonclay7/aws-amicleaner/',
