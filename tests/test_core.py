@@ -4,7 +4,7 @@ import boto3
 from datetime import datetime
 from moto import mock_ec2
 
-from amicleaner.core import AMICleaner
+from amicleaner.core import AMICleaner, OrphanSnapshotCleaner
 from amicleaner.resources.models import AMI, AWSEC2Instance, AWSTag
 
 
@@ -256,3 +256,41 @@ def test_fetch_instances():
 
     # Test fetch instances method
     assert len(AMICleaner(conn).fetch_instances()) == 1
+
+
+@mock_ec2
+def test_fetch_snapshots_from_none():
+
+    cleaner = OrphanSnapshotCleaner()
+
+    assert len(cleaner.get_snapshots_filter()) > 0
+    assert type(cleaner.fetch()) is list
+    assert len(cleaner.fetch()) == 0
+
+"""
+@mock_ec2
+def test_fetch_snapshots():
+    base_ami = "ami-1234abcd"
+
+    conn = boto3.client('ec2')
+    reservation = conn.run_instances(
+        ImageId=base_ami, MinCount=1, MaxCount=1
+    )
+    instance = reservation["Instances"][0]
+
+    # create amis
+    images = []
+    for i in xrange(5):
+        image = conn.create_image(
+            InstanceId=instance.get("InstanceId"),
+            Name="test-ami"
+        )
+        images.append(image.get("ImageId"))
+
+    # deleting two amis, creating orphan snpashots condition
+    conn.deregister_image(ImageId=images[0])
+    conn.deregister_image(ImageId=images[1])
+
+    cleaner = OrphanSnapshotCleaner()
+    assert len(cleaner.fetch()) == 0
+"""

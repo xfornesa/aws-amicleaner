@@ -104,3 +104,7 @@ def test_print_failed_snapshots():
 def test_print_orphan_snapshots():
     assert Printer.print_orphan_snapshots({}) is None
     assert Printer.print_orphan_snapshots(["ami-one", "ami-two"]) is None
+
+
+def test_print_defaults():
+    assert App(parse_args([])).print_defaults() is None
