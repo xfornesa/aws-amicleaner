@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import argparse
 
 from prettytable import PrettyTable
@@ -60,6 +62,11 @@ def parse_args(args):
     parser = argparse.ArgumentParser(description='Clean your AMIs on your '
                                                  'AWS account. Your AWS '
                                                  'credentials must be sourced')
+
+    parser.add_argument("-v", "--version",
+                        dest='version',
+                        action="store_true",
+                        help="Prints version and exits")
 
     parser.add_argument("--from-ids",
                         dest='from_ids',

@@ -1,6 +1,9 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import sys
 
+from amicleaner import __version__
 from core import AMICleaner, OrphanSnapshotCleaner
 from resources.config import MAPPING_KEY, MAPPING_VALUES
 from resources.config import TERM
@@ -11,6 +14,7 @@ class App:
 
     def __init__(self, args):
 
+        self.version = args.version
         self.mapping_key = args.mapping_key or MAPPING_KEY
         self.mapping_values = args.mapping_values or MAPPING_VALUES
         self.keep_previous = args.keep_previous
@@ -103,6 +107,10 @@ class App:
         print TERM.green("mapping_values : {0}".format(self.mapping_values))
         print TERM.green("keep_previous : {0}".format(self.keep_previous))
 
+    @staticmethod
+    def print_version():
+        print(__version__)
+
     def run_cli(self):
 
         if self.check_orphans:
@@ -141,7 +149,11 @@ def main():
         sys.exit(1)
 
     app = App(args)
-    app.run_cli()
+
+    if app.version is True:
+        app.print_version()
+    else:
+        app.run_cli()
 
 
 if __name__ == "__main__":

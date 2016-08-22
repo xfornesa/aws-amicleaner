@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import boto3
 from botocore.exceptions import ClientError
@@ -9,8 +10,8 @@ class OrphanSnapshotCleaner:
 
     """ Finds and removes ebs snapshots left orphaned """
 
-    def __init__(self):
-        self.ec2 = boto3.client('ec2')
+    def __init__(self, ec2=None):
+        self.ec2 = ec2 or boto3.client('ec2')
 
     def get_snapshots_filter(self):
 
@@ -25,6 +26,17 @@ class OrphanSnapshotCleaner:
             ]
         }]
 
+    def get_owner_id(self, images_json):
+
+        """ Return AWS owner id from a ami json list """
+
+        images = images_json or []
+
+        if not images:
+            return None
+
+        return images[0].get("OwnerId", "")
+
     def fetch(self):
 
         """ retrieve orphan snapshots """
@@ -37,7 +49,10 @@ class OrphanSnapshotCleaner:
             for ebs in image.get("BlockDeviceMappings")
         ]
         snap_filter = self.get_snapshots_filter()
-        owner_id = resp.get("Images")[0].get("OwnerId")
+        owner_id = self.get_owner_id(resp.get("Images"))
+
+        if not owner_id:
+            return []
 
         # all snapshots created for AMIs
         resp = self.ec2.describe_snapshots(

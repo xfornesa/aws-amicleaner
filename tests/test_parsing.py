@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import json
 
 from amicleaner.resources.models import AMI, AWSBlockDevice, AWSEC2Instance

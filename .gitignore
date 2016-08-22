@@ -79,3 +79,7 @@ celerybeat-schedule
 
 # Spyder project settings
 .spyderproject
+
+# Vagrant
+Vagrantfile
+.vagrant/
