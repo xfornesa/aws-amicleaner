@@ -34,6 +34,10 @@
         "VolumeType": "standard",
         "Encrypted": false
       }
+    },
+    {
+       "VirtualName": "ephemeral0",
+       "DeviceName": "/dev/sdb"
     }
   ],
   "Architecture": "x86_64",
