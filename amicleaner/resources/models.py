@@ -47,13 +47,12 @@ class AMI:
         o.state = json.get('State')
         o.virtualization_type = json.get('VirtualizationType')
 
-        for tag in json.get('Tags', []):
-            aws_tag = AWSTag.object_with_json(tag)
-            o.tags.append(aws_tag)
-
-        for block_device in json.get('BlockDeviceMappings', []):
-            aws_block_device = AWSBlockDevice.object_with_json(block_device)
-            o.block_device_mappings.append(aws_block_device)
+        o.tags = [AWSTag.object_with_json(tag) for tag in json.get('Tags', [])]
+        ebs_snapshots = [
+            AWSBlockDevice.object_with_json(block_device) for block_device
+            in json.get('BlockDeviceMappings', [])
+        ]
+        o.block_device_mappings = filter(None, ebs_snapshots)
 
         return o
 
@@ -133,13 +132,16 @@ class AWSBlockDevice:
         if json is None:
             return None
 
+        ebs = json.get('Ebs')
+        if ebs is None:
+            return None
+
         o = AWSBlockDevice()
         o.device_name = json.get('DeviceName')
-        if json.get('Ebs'):
-            o.snapshot_id = json.get('Ebs').get('SnapshotId')
-            o.volume_size = json.get('Ebs').get('VolumeSize')
-            o.volume_type = json.get('Ebs').get('VolumeType')
-            o.encrypted = json.get('Ebs').get('Encrypted')
+        o.snapshot_id = ebs.get('SnapshotId')
+        o.volume_size = ebs.get('VolumeSize')
+        o.volume_type = ebs.get('VolumeType')
+        o.encrypted = ebs.get('Encrypted')
 
         return o
 
