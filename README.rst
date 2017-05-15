@@ -3,7 +3,7 @@ aws-amicleaner
 
 Cleanup your old unused ami and related snapshots
 
-|Circle CI| |codecov.io| |pypi|
+|Travis CI| |codecov.io| |pypi|
 
 Description
 -----------
@@ -151,8 +151,8 @@ Delete a list of AMIs
     amicleaner --from-ids ami-abcdef01 ami-abcdef02
 
 
-.. |Circle CI| image:: https://circleci.com/gh/bonclay7/aws-amicleaner/tree/master.svg?style=svg
-   :target: https://circleci.com/gh/bonclay7/aws-amicleaner/tree/master
+.. |Travis CI| image:: https://travis-ci.org/bonclay7/aws-amicleaner.svg?branch=master
+   :target: https://travis-ci.org/bonclay7/aws-amicleaner
 .. |codecov.io| image:: https://codecov.io/github/bonclay7/aws-amicleaner/coverage.svg?branch=master
    :target: https://codecov.io/github/bonclay7/aws-amicleaner?branch=master
 .. |pypi| image:: https://img.shields.io/pypi/v/aws-amicleaner.svg
