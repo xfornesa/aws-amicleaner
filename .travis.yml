@@ -1,0 +1,16 @@
+env:
+  global:
+    - AWS_DEFAULT_REGION=eu-west-1
+
+dist: trusty
+language: python
+python: "2.7"
+
+install:
+  - pip install -r requirements_build.txt
+
+script:
+  - py.test
+
+after_success:
+  - codecov

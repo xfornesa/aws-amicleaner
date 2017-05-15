@@ -1,9 +1,7 @@
-boto
+-r requirements.txt
 blessings==1.6
 codecov
-boto3
 moto
-prettytable
 pep8>=1.7.0
 pytest
 pytest-pep8
