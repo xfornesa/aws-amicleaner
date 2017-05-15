@@ -3,7 +3,7 @@
 
 import boto3
 from botocore.exceptions import ClientError
-from resources.models import AMI, AWSEC2Instance
+from resources.models import AMI
 
 
 class OrphanSnapshotCleaner:
@@ -142,49 +142,7 @@ class AMICleaner:
 
         return self.remove_amis(amis)
 
-    def fetch_available_amis(self):
-
-        """ Retrieve from your aws account your custom AMIs"""
-
-        available_amis = dict()
-
-        my_custom_images = self.ec2.describe_images(Owners=['self'])
-        for image_json in my_custom_images.get('Images'):
-            ami = AMI.object_with_json(image_json)
-            available_amis[ami.id] = ami
-
-        return available_amis
-
-    def fetch_instances(self):
-
-        """ Retrieve from your aws account your running ec2 instances """
-
-        ec2_instances = dict()
-
-        my_instances = self.ec2.describe_instances()
-        for reservation in my_instances.get("Reservations", []):
-            for instance_json in reservation.get("Instances", []):
-                ec2_instance = AWSEC2Instance.object_with_json(instance_json)
-                ec2_instances[ec2_instance.image_id] = ec2_instance
-
-        return ec2_instances
-
-    def fetch_candidates(self, amis_dict=None, instances_dict=None):
-
-        """
-        Collects AMIs and ec2 instances (as dicts) and returns AMIs not holded
-        by instances. Both dicts have as keys an ami-id
-        """
-
-        amis_dict = amis_dict or self.fetch_available_amis()
-        instances_dict = instances_dict or self.fetch_instances()
-
-        for instance_image_id, ec2_instance in instances_dict.iteritems():
-            amis_dict.pop(instance_image_id, None)
-
-        return amis_dict.values()
-
-    def map_candidates(self, candidates_ami=None, mapping_strategy=None):
+    def map_candidates(self, candidates_amis=None, mapping_strategy=None):
 
         """
         Given a dict of AMIs to clean, and a mapping strategy (see config.py),
@@ -196,7 +154,7 @@ class AMICleaner:
         or
         mapping_strategy = {"key": "tags", "values": ["env", "role"]}
 
-        print map_candidates(candidates_ami, mapping_strategy)
+        print map_candidates(candidates_amis, mapping_strategy)
         ==>
         {
             "ubuntu": [obj1, obj3],
@@ -212,15 +170,16 @@ class AMICleaner:
         }
         """
 
+        if not candidates_amis:
+            return {}
+
         mapping_strategy = mapping_strategy or {}
 
         if not mapping_strategy:
-            return candidates_ami
-
-        candidates_ami = candidates_ami or self.fetch_candidates()
+            return candidates_amis
 
         candidates_map = dict()
-        for ami in candidates_ami:
+        for ami in candidates_amis:
             # case : grouping on name
             if mapping_strategy.get("key") == "name":
                 for mapping_value in mapping_strategy.get("values"):
