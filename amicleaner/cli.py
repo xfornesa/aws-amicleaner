@@ -5,6 +5,7 @@ import sys
 
 from amicleaner import __version__
 from core import AMICleaner, OrphanSnapshotCleaner
+from fetch import Fetcher
 from resources.config import MAPPING_KEY, MAPPING_VALUES
 from resources.config import TERM
 from utils import Printer, parse_args
@@ -28,14 +29,43 @@ class App:
             "values": self.mapping_values,
         }
 
-    def fetch_and_prepare(self):
+    def fetch_candidates(self, available_amis=None, excluded_amis=None):
 
-        """ Uses AMICleaner to retrieve candidates AMI, map and reduce """
+        """
+        Collects created AMIs,
+        AMIs from ec2 instances, launch configurations, autoscaling groups
+        and returns unused AMIs.
+        """
+        f = Fetcher()
 
-        cleaner = AMICleaner()
+        available_amis = available_amis or f.fetch_available_amis()
+        excluded_amis = excluded_amis or []
 
-        mapped_amis = cleaner.map_candidates(
-            mapping_strategy=self.mapping_strategy
+        if not excluded_amis:
+            excluded_amis += f.fetch_unattached_lc()
+            excluded_amis += f.fetch_zeroed_asg()
+            excluded_amis += f.fetch_instances()
+
+        candidates = [v
+                      for k, v
+                      in available_amis.iteritems()
+                      if k not in excluded_amis]
+        return candidates
+
+    def prepare_candidates(self, candidates_amis=None):
+
+        """ From an AMI list apply mapping strategy and filters """
+
+        candidates_amis = candidates_amis or self.fetch_candidates()
+
+        if not candidates_amis:
+            return None
+
+        c = AMICleaner()
+
+        mapped_amis = c.map_candidates(
+            candidates_amis=candidates_amis,
+            mapping_strategy=self.mapping_strategy,
         )
 
         if not mapped_amis:
@@ -50,7 +80,7 @@ class App:
             if not group_name:
                 report["no-tags (excluded)"] = amis
             else:
-                reduced = cleaner.reduce_candidates(amis, self.keep_previous)
+                reduced = c.reduce_candidates(amis, self.keep_previous)
                 if reduced:
                     report[group_name] = reduced
                     candidates.extend(reduced)
@@ -61,7 +91,7 @@ class App:
 
     def prepare_delete_amis(self, candidates, from_ids=False):
 
-        """ prepare deletion of candidates AMIs"""
+        """ Prepare deletion of candidates AMIs"""
 
         failed = []
 
@@ -123,7 +153,7 @@ class App:
             self.print_defaults()
 
             print TERM.bold("\nRetrieving AMIs to clean ...")
-            candidates = self.fetch_and_prepare()
+            candidates = self.prepare_candidates()
 
             if not candidates:
                 sys.exit(0)

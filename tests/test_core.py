@@ -1,48 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import boto3
 from datetime import datetime
 from moto import mock_ec2
 
 from amicleaner.core import AMICleaner, OrphanSnapshotCleaner
-from amicleaner.resources.models import AMI, AWSEC2Instance, AWSTag
-
-
-def test_fetch_candidates():
-    # creating tests objects
-    first_ami = AMI()
-    first_ami.id = 'ami-28c2b348'
-    first_ami.creation_date = datetime.now()
-
-    first_instance = AWSEC2Instance()
-    first_instance.id = 'i-9f9f6a2a'
-    first_instance.name = "first-instance"
-    first_instance.image_id = first_ami.id
-    first_instance.launch_time = datetime.now()
-
-    second_ami = AMI()
-    second_ami.id = 'unused-ami'
-    second_ami.creation_date = datetime.now()
-
-    second_instance = AWSEC2Instance()
-    second_instance.id = 'i-9f9f6a2a'
-    second_instance.name = "second-instance"
-    second_instance.image_id = first_ami.id
-    second_instance.launch_time = datetime.now()
-
-    # constructing dicts
-    amis_dict = dict()
-    amis_dict[first_ami.id] = first_ami
-    amis_dict[second_ami.id] = second_ami
-
-    instances_dict = dict()
-    instances_dict[first_instance.image_id] = instances_dict
-    instances_dict[second_instance.image_id] = second_instance
-
-    # testing filter
-    unused_ami_dict = AMICleaner().fetch_candidates(amis_dict, instances_dict)
-    assert len(unused_ami_dict) == 1
-    assert amis_dict.get('unused-ami') is not None
+from amicleaner.resources.models import AMI, AWSTag
 
 
 def test_map_candidates_with_null_arguments():
@@ -242,23 +204,6 @@ def test_remove_ami_from_none():
 
 
 @mock_ec2
-def test_fetch_instances():
-    """ Tests fetch instances and AMIs """
-
-    base_ami = "ami-1234abcd"
-
-    conn = boto3.client('ec2')
-    reservation = conn.run_instances(
-        ImageId=base_ami, MinCount=1, MaxCount=1
-    )
-    instance = reservation["Instances"][0]
-    assert instance.get("ImageId") == base_ami
-
-    # Test fetch instances method
-    assert len(AMICleaner(conn).fetch_instances()) == 1
-
-
-@mock_ec2
 def test_fetch_snapshots_from_none():
 
     cleaner = OrphanSnapshotCleaner()
@@ -266,6 +211,7 @@ def test_fetch_snapshots_from_none():
     assert len(cleaner.get_snapshots_filter()) > 0
     assert type(cleaner.fetch()) is list
     assert len(cleaner.fetch()) == 0
+
 
 """
 @mock_ec2

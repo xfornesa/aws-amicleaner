@@ -13,6 +13,6 @@ dependencies:
     - sudo pip install -r requirements_build.txt
 test:
   override:
-    - py.test -v --ignore=venv --cov . --pep8 tests
+    - py.test -v --cov-report html --cov-fail-under 80 --cov . --pep8
   post:
     - codecov

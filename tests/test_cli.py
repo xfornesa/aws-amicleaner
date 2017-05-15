@@ -3,21 +3,24 @@
 import json
 
 import boto3
-from moto import mock_ec2
+from moto import mock_ec2, mock_autoscaling
+from datetime import datetime
 
 from amicleaner.cli import App
-from amicleaner.core import AMICleaner
-from amicleaner.resources.models import AMI
+from amicleaner.fetch import Fetcher
 from amicleaner.utils import parse_args, Printer
+from amicleaner.resources.models import AMI, AWSEC2Instance
 
 
 @mock_ec2
+@mock_autoscaling
 def test_fetch_and_prepare():
     parser = parse_args(['--keep-previous', '0'])
-    assert App(parser).fetch_and_prepare() is None
+    assert App(parser).prepare_candidates() is None
 
 
 @mock_ec2
+@mock_autoscaling
 def test_deletion():
     """ Test deletion methods """
 
@@ -30,8 +33,8 @@ def test_deletion():
             '--mapping-values', 'test-ami']
     )
 
-    conn = boto3.client('ec2')
-    reservation = conn.run_instances(
+    ec2 = boto3.client('ec2')
+    reservation = ec2.run_instances(
         ImageId=base_ami, MinCount=1, MaxCount=1
     )
     instance = reservation["Instances"][0]
@@ -39,25 +42,67 @@ def test_deletion():
     # create amis
     images = []
     for i in xrange(5):
-        image = conn.create_image(
+        image = ec2.create_image(
             InstanceId=instance.get("InstanceId"),
             Name="test-ami"
         )
         images.append(image.get("ImageId"))
 
-    # delete one by id
+    # delete one AMI by id
     app = App(parser)
-    assert len(AMICleaner(conn).fetch_available_amis()) == 5
+    asg = boto3.client('autoscaling')
+    f = Fetcher(ec2=ec2, autoscaling=asg)
+
+    assert len(f.fetch_available_amis()) == 5
     assert app.prepare_delete_amis(
         candidates=[images[4]], from_ids=True
     ) is None
-    assert len(AMICleaner(conn).fetch_available_amis()) == 4
+    assert len(f.fetch_available_amis()) == 4
 
     # delete with mapping strategy
-    candidates = app.fetch_and_prepare()
+    candidates = app.prepare_candidates()
     assert len(candidates) == 4
     assert app.prepare_delete_amis(candidates) is None
-    assert len(AMICleaner(conn).fetch_available_amis()) == 0
+    assert len(f.fetch_available_amis()) == 0
+
+
+def test_fetch_candidates():
+    # creating tests objects
+    first_ami = AMI()
+    first_ami.id = 'ami-28c2b348'
+    first_ami.creation_date = datetime.now()
+
+    first_instance = AWSEC2Instance()
+    first_instance.id = 'i-9f9f6a2a'
+    first_instance.name = "first-instance"
+    first_instance.image_id = first_ami.id
+    first_instance.launch_time = datetime.now()
+
+    second_ami = AMI()
+    second_ami.id = 'unused-ami'
+    second_ami.creation_date = datetime.now()
+
+    second_instance = AWSEC2Instance()
+    second_instance.id = 'i-9f9f6a2b'
+    second_instance.name = "second-instance"
+    second_instance.image_id = first_ami.id
+    second_instance.launch_time = datetime.now()
+
+    # constructing dicts
+    amis_dict = dict()
+    amis_dict[first_ami.id] = first_ami
+    amis_dict[second_ami.id] = second_ami
+
+    instances_dict = dict()
+    instances_dict[first_instance.image_id] = instances_dict
+    instances_dict[second_instance.image_id] = second_instance
+
+    # testing filter
+    unused_ami_dict = App(parse_args([])).fetch_candidates(
+        amis_dict, list(instances_dict)
+    )
+    assert len(unused_ami_dict) == 1
+    assert amis_dict.get('unused-ami') is not None
 
 
 def test_parse_args_no_args():
