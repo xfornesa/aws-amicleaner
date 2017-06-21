@@ -157,3 +157,8 @@ Delete a list of AMIs
    :target: https://codecov.io/github/bonclay7/aws-amicleaner?branch=master
 .. |pypi| image:: https://img.shields.io/pypi/v/aws-amicleaner.svg
    :target: https://pypi.python.org/pypi/aws-amicleaner
+
+
+See this `blog article 
+<http://techblog.d2-si.eu/2017/06/15/cleaning-your-amazon-machine-images.html>`__
+for more information.
