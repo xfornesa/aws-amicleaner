@@ -8,7 +8,7 @@ Cleanup your old unused ami and related snapshots
 Description
 -----------
 
-This tools permits to clean your custom `Amazon Machine Images (AMI)
+This tool enables you to clean your custom `Amazon Machine Images (AMI)
 <http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html>`__ and
 related `EBS Snapshots
 <http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html>`__.
@@ -28,9 +28,9 @@ Prerequisites
 -  `awscli <http://docs.aws.amazon.com/cli/latest/userguide/installing.html>`__
 -  `python
    2.7 <https://www.python.org/downloads/release/python-2710/>`__
--  `pyhton pip <https://pip.pypa.io/en/stable/installing/>`__
+-  `python pip <https://pip.pypa.io/en/stable/installing/>`__
 
-This tool assumes your AWS credentials sourced, either with aws
+This tool assumes your AWS credentials are in your environment, either with AWS
 credentials variables :
 
 .. code:: bash
@@ -76,7 +76,7 @@ permissions in ``iam``:
 Installation
 ------------
 
-amicleaner is available on pypi and can be installed on your system
+amicleaner is available on pypi and can be installed on your system with pip
 
 From pypi
 ~~~~~~~~~
@@ -159,6 +159,6 @@ Delete a list of AMIs
    :target: https://pypi.python.org/pypi/aws-amicleaner
 
 
-See this `blog article 
+See this `blog article
 <http://techblog.d2-si.eu/2017/06/15/cleaning-your-amazon-machine-images.html>`__
 for more information.
