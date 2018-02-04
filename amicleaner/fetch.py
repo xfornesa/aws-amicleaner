@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
+from builtins import object
 import boto3
-from resources.models import AMI
+from .resources.models import AMI
 
 
-class Fetcher:
+class Fetcher(object):
 
     """ Fetches function for AMI candidates to deletion """
 

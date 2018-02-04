@@ -4,13 +4,16 @@ env:
 
 dist: trusty
 language: python
-python: "2.7"
+python:
+  - "3.4"
+  - "3.5"
+  - "3.6"
 
 install:
   - pip install -r requirements_build.txt
 
 script:
-  - py.test
+  - py.test -v
 
 after_success:
   - codecov

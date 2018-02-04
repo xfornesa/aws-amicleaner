@@ -1,17 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+from __future__ import absolute_import
+from builtins import input
+from builtins import object
 import sys
 
 from amicleaner import __version__
-from core import AMICleaner, OrphanSnapshotCleaner
-from fetch import Fetcher
-from resources.config import MAPPING_KEY, MAPPING_VALUES
-from resources.config import TERM
-from utils import Printer, parse_args
+from .core import AMICleaner, OrphanSnapshotCleaner
+from .fetch import Fetcher
+from .resources.config import MAPPING_KEY, MAPPING_VALUES
+from .resources.config import TERM
+from .utils import Printer, parse_args
 
 
-class App:
+class App(object):
 
     def __init__(self, args):
 
@@ -48,7 +52,7 @@ class App:
 
         candidates = [v
                       for k, v
-                      in available_amis.iteritems()
+                      in available_amis.items()
                       if k not in excluded_amis]
         return candidates
 
@@ -74,7 +78,7 @@ class App:
         candidates = []
         report = dict()
 
-        for group_name, amis in mapped_amis.iteritems():
+        for group_name, amis in mapped_amis.items():
             group_name = group_name or ""
 
             if not group_name:
@@ -96,16 +100,16 @@ class App:
         failed = []
 
         if from_ids:
-            print TERM.bold("\nCleaning from {} AMI id(s) ...".format(
+            print(TERM.bold("\nCleaning from {} AMI id(s) ...".format(
                 len(candidates))
-            )
+            ))
             failed = AMICleaner().remove_amis_from_ids(candidates)
         else:
-            print TERM.bold("\nCleaning {} AMIs ...".format(len(candidates)))
+            print(TERM.bold("\nCleaning {} AMIs ...".format(len(candidates))))
             failed = AMICleaner().remove_amis(candidates)
 
         if failed:
-            print TERM.red("\n{0} failed snapshots".format(len(failed)))
+            print(TERM.red("\n{0} failed snapshots".format(len(failed))))
             Printer.print_failed_snapshots(failed)
 
     def clean_orphans(self):
@@ -120,22 +124,22 @@ class App:
 
         Printer.print_orphan_snapshots(snaps)
 
-        answer = raw_input(
+        answer = input(
             "Do you want to continue and remove {} orphan snapshots "
             "[y/N] ? : ".format(len(snaps)))
         confirm = (answer.lower() == "y")
 
         if confirm:
-            print "Removing orphan snapshots... "
+            print("Removing orphan snapshots... ")
             count = cleaner.clean(snaps)
-            print "\n{0} orphan snapshots successfully removed !".format(count)
+            print("\n{0} orphan snapshots successfully removed !".format(count))
 
     def print_defaults(self):
 
-        print TERM.bold("\nDefault values : ==>")
-        print TERM.green("mapping_key : {0}".format(self.mapping_key))
-        print TERM.green("mapping_values : {0}".format(self.mapping_values))
-        print TERM.green("keep_previous : {0}".format(self.keep_previous))
+        print(TERM.bold("\nDefault values : ==>"))
+        print(TERM.green("mapping_key : {0}".format(self.mapping_key)))
+        print(TERM.green("mapping_values : {0}".format(self.mapping_values)))
+        print(TERM.green("keep_previous : {0}".format(self.keep_previous)))
 
     @staticmethod
     def print_version():
@@ -152,7 +156,7 @@ class App:
             # print defaults
             self.print_defaults()
 
-            print TERM.bold("\nRetrieving AMIs to clean ...")
+            print(TERM.bold("\nRetrieving AMIs to clean ..."))
             candidates = self.prepare_candidates()
 
             if not candidates:
@@ -161,7 +165,7 @@ class App:
             delete = False
 
             if not self.force_delete:
-                answer = raw_input(
+                answer = input(
                     "Do you want to continue and remove {} AMIs "
                     "[y/N] ? : ".format(len(candidates)))
                 delete = (answer.lower() == "y")

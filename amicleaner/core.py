@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+from __future__ import absolute_import
+from builtins import object
 import boto3
 from botocore.exceptions import ClientError
-from resources.models import AMI
+from .resources.models import AMI
 
 
-class OrphanSnapshotCleaner:
+class OrphanSnapshotCleaner(object):
 
     """ Finds and removes ebs snapshots left orphaned """
 
@@ -82,10 +85,10 @@ class OrphanSnapshotCleaner:
         return count
 
     def log(self, msg):
-        print msg
+        print(msg)
 
 
-class AMICleaner:
+class AMICleaner(object):
 
     def __init__(self, ec2=None):
         self.ec2 = ec2 or boto3.client('ec2')
@@ -109,7 +112,7 @@ class AMICleaner:
         amis = amis or []
         for ami in amis:
             self.ec2.deregister_image(ImageId=ami.id)
-            print "{0} deregistered".format(ami.id)
+            print("{0} deregistered".format(ami.id))
             for block_device in ami.block_device_mappings:
                 try:
                     self.ec2.delete_snapshot(
@@ -117,7 +120,7 @@ class AMICleaner:
                     )
                 except ClientError:
                     failed_snapshots.append(block_device.snapshot_id)
-                print "{0} deleted\n".format(block_device.snapshot_id)
+                print("{0} deleted\n".format(block_device.snapshot_id))
 
         return failed_snapshots
 

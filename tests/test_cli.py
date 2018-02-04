@@ -41,7 +41,7 @@ def test_deletion():
 
     # create amis
     images = []
-    for i in xrange(5):
+    for i in range(5):
         image = ec2.create_image(
             InstanceId=instance.get("InstanceId"),
             Name="test-ami"

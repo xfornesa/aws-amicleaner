@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+from __future__ import absolute_import
+from builtins import object
 import argparse
 
 from prettytable import PrettyTable
 
-from resources.config import KEEP_PREVIOUS
+from .resources.config import KEEP_PREVIOUS
 
 
-class Printer:
+class Printer(object):
 
     """ Pretty table prints methods """
     @staticmethod
@@ -21,7 +24,7 @@ class Printer:
 
         groups_table = PrettyTable(["Group name", "candidates"])
 
-        for group_name, amis in candidates.iteritems():
+        for group_name, amis in candidates.items():
             groups_table.add_row([group_name, len(amis)])
             eligible_amis_table = PrettyTable(
                 ["AMI ID", "AMI Name", "Creation Date"]
@@ -33,11 +36,11 @@ class Printer:
                     ami.creation_date
                 ])
             if full_report:
-                print group_name
-                print eligible_amis_table.get_string(sortby="AMI Name"), "\n\n"
+                print(group_name)
+                print(eligible_amis_table.get_string(sortby="AMI Name"), "\n\n")
 
-        print "\nAMIs to be removed:"
-        print groups_table.get_string(sortby="Group name")
+        print("\nAMIs to be removed:")
+        print(groups_table.get_string(sortby="Group name"))
 
     @staticmethod
     def print_failed_snapshots(snapshots):
@@ -46,7 +49,7 @@ class Printer:
 
         for snap in snapshots:
             snap_table.add_row([snap])
-        print snap_table
+        print(snap_table)
 
     @staticmethod
     def print_orphan_snapshots(snapshots):
@@ -55,7 +58,7 @@ class Printer:
 
         for snap in snapshots:
             snap_table.add_row([snap])
-        print snap_table
+        print(snap_table)
 
 
 def parse_args(args):
@@ -106,7 +109,7 @@ def parse_args(args):
 
     parsed_args = parser.parse_args(args)
     if parsed_args.mapping_key and not parsed_args.mapping_values:
-        print "missing mapping-values\n"
+        print("missing mapping-values\n")
         parser.print_help()
         return None
 
