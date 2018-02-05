@@ -26,8 +26,7 @@ Prerequisites
 -------------
 
 -  `awscli <http://docs.aws.amazon.com/cli/latest/userguide/installing.html>`__
--  `python
-   2.7 <https://www.python.org/downloads/release/python-2710/>`__
+-  `python 2.7 or 3+`
 -  `python pip <https://pip.pypa.io/en/stable/installing/>`__
 
 This tool assumes your AWS credentials are in your environment, either with AWS
