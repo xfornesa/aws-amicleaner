@@ -10,7 +10,7 @@ import sys
 from amicleaner import __version__
 from .core import AMICleaner, OrphanSnapshotCleaner
 from .fetch import Fetcher
-from .resources.config import MAPPING_KEY, MAPPING_VALUES
+from .resources.config import MAPPING_KEY, MAPPING_VALUES, EXCLUDED_MAPPING_VALUES
 from .resources.config import TERM
 from .utils import Printer, parse_args
 
@@ -22,6 +22,7 @@ class App(object):
         self.version = args.version
         self.mapping_key = args.mapping_key or MAPPING_KEY
         self.mapping_values = args.mapping_values or MAPPING_VALUES
+        self.excluded_mapping_values = args.excluded_mapping_values or EXCLUDED_MAPPING_VALUES
         self.keep_previous = args.keep_previous
         self.check_orphans = args.check_orphans
         self.from_ids = args.from_ids
@@ -31,6 +32,7 @@ class App(object):
         self.mapping_strategy = {
             "key": self.mapping_key,
             "values": self.mapping_values,
+            "excluded": self.excluded_mapping_values,
         }
 
     def fetch_candidates(self, available_amis=None, excluded_amis=None):
@@ -139,6 +141,7 @@ class App(object):
         print(TERM.bold("\nDefault values : ==>"))
         print(TERM.green("mapping_key : {0}".format(self.mapping_key)))
         print(TERM.green("mapping_values : {0}".format(self.mapping_values)))
+        print(TERM.green("excluded_mapping_values : {0}".format(self.excluded_mapping_values)))
         print(TERM.green("keep_previous : {0}".format(self.keep_previous)))
 
     @staticmethod

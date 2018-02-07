@@ -155,7 +155,7 @@ class AMICleaner(object):
         example :
         mapping_strategy = {"key": "name", "values": ["ubuntu", "debian"]}
         or
-        mapping_strategy = {"key": "tags", "values": ["env", "role"]}
+        mapping_strategy = {"key": "tags", "values": ["env", "role"], "excluded": ["master", "develop"]}
 
         print map_candidates(candidates_amis, mapping_strategy)
         ==>
@@ -196,9 +196,16 @@ class AMICleaner(object):
                     ami.tags,
                     mapping_strategy.get("values")
                 )
-                mapping_list = candidates_map.get(mapping_value) or []
-                mapping_list.append(ami)
-                candidates_map[mapping_value] = mapping_list
+                if mapping_strategy.get("excluded"):
+                    for excluded_mapping_value in mapping_strategy.get("excluded"):
+                        if excluded_mapping_value not in mapping_value:
+                            mapping_list = candidates_map.get(mapping_value) or []
+                            mapping_list.append(ami)
+                            candidates_map[mapping_value] = mapping_list
+                else:
+                    mapping_list = candidates_map.get(mapping_value) or []
+                    mapping_list.append(ami)
+                    candidates_map[mapping_value] = mapping_list
 
         return candidates_map
 

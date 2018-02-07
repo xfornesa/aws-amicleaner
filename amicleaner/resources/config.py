@@ -24,3 +24,6 @@ MAPPING_KEY = "tags"
 
 
 MAPPING_VALUES = ["environment", "role"]
+
+
+EXCLUDED_MAPPING_VALUES = []

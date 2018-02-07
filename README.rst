@@ -127,6 +127,12 @@ Regroup by name or tags
 
     amicleaner --mapping-key tags --mapping-values role env
 
+Exclude amis based on tag values
+
+.. code:: bash
+
+    amicleaner --mapping-key tags --mapping-values role env -excluded-mapping-values prod
+
 Skip confirmation, can be useful for automation
 
 .. code:: bash
