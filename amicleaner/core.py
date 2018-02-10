@@ -115,13 +115,14 @@ class AMICleaner(object):
             self.ec2.deregister_image(ImageId=ami.id)
             print("{0} deregistered".format(ami.id))
             for block_device in ami.block_device_mappings:
-                try:
-                    self.ec2.delete_snapshot(
-                        SnapshotId=block_device.snapshot_id
-                    )
-                except ClientError:
-                    failed_snapshots.append(block_device.snapshot_id)
-                print("{0} deleted\n".format(block_device.snapshot_id))
+                if block_device.snapshot_id is not None:
+                    try:
+                            self.ec2.delete_snapshot(
+                                SnapshotId=block_device.snapshot_id
+                            )
+                    except ClientError:
+                        failed_snapshots.append(block_device.snapshot_id)
+                    print("{0} deleted\n".format(block_device.snapshot_id))
 
         return failed_snapshots
 
