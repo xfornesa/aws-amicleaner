@@ -90,6 +90,11 @@ def parse_args(args):
                         nargs='+',
                         help="List of values for tags or name")
 
+    parser.add_argument("--excluded-mapping-values",
+                        dest='excluded_mapping_values',
+                        nargs='+',
+                        help="List of values to be excluded from tags")
+
     parser.add_argument("--keep-previous",
                         dest='keep_previous',
                         type=int,

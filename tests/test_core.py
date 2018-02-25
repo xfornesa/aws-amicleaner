@@ -135,6 +135,51 @@ def test_map_with_tags():
     assert len(grouped_amis.get("prod.web-server")) == 2
 
 
+def test_map_with_tag_exclusions():
+    # tags
+    stack_tag = AWSTag()
+    stack_tag.key = "stack"
+    stack_tag.value = "web-server"
+
+    env_tag = AWSTag()
+    env_tag.key = "env"
+    env_tag.value = "prod"
+
+    # creating tests objects
+    # prod and web-server
+    first_ami = AMI()
+    first_ami.id = 'ami-28c2b348'
+    first_ami.name = "ubuntu-20160102"
+    first_ami.tags.append(stack_tag)
+    first_ami.tags.append(env_tag)
+    first_ami.creation_date = datetime.now()
+
+    # just prod
+    second_ami = AMI()
+    second_ami.id = 'ami-28c2b349'
+    second_ami.name = "ubuntu-20160103"
+    second_ami.tags.append(env_tag)
+    second_ami.creation_date = datetime.now()
+
+    # just web-server
+    third_ami = AMI()
+    third_ami.id = 'ami-28c2b350'
+    third_ami.name = "debian-20160104"
+    third_ami.tags.append(stack_tag)
+    third_ami.creation_date = datetime.now()
+
+    # creating amis to drop dict
+    candidates = [first_ami, second_ami, third_ami]
+
+    # grouping strategy
+    grouping_strategy = {"key": "tags", "values": ["stack", "env"], "excluded": ["prod"]}
+    grouped_amis = AMICleaner().map_candidates(candidates, grouping_strategy)
+    assert grouped_amis is not None
+    assert grouped_amis.get("prod") is None
+    assert grouped_amis.get("prod.web-server") is None
+    assert len(grouped_amis.get("web-server")) == 1
+
+
 def test_reduce_without_rotation_number():
     # creating tests objects
     first_ami = AMI()
