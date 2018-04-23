@@ -99,7 +99,7 @@ def parse_args(args):
                         dest='keep_previous',
                         type=int,
                         default=KEEP_PREVIOUS,
-                        help="Number of previous AMI to keep excluding those"
+                        help="Number of previous AMI to keep excluding those "
                              "currently being running")
 
     parser.add_argument("-f", "--force-delete",
