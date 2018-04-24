@@ -63,10 +63,12 @@ permissions in ``iam``:
                     "ec2:DeregisterImage",
                     "ec2:DescribeImages",
                     "ec2:DescribeInstances",
-                    "ec2:DescribeSnapshots"
+                    "ec2:DescribeSnapshots",
+                    "autoscaling:DescribeAutoScalingGroups",
+                    "autoscaling:DescribeLaunchConfigurations"
                 ],
                 "Resource": [
-                    "arn:aws:ec2:::*"
+                    "*"
                 ]
             }
         ]
