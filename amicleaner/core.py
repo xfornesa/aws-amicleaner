@@ -7,6 +7,7 @@ from builtins import object
 import boto3
 from botocore.exceptions import ClientError
 from .resources.models import AMI
+from datetime import datetime
 
 
 class OrphanSnapshotCleaner(object):
@@ -232,13 +233,26 @@ class AMICleaner(object):
 
         return ".".join(sorted(tag_values))
 
-    def reduce_candidates(self, mapped_candidates_ami, keep_previous=0):
+    def reduce_candidates(self, mapped_candidates_ami, keep_previous=0, keep_for_days=-1):
 
         """
         Given a array of AMIs to clean this function return a subsequent
         list by preserving a given number of them (history) based on creation
         time and rotation_strategy param
         """
+
+        result_amis = []
+        result_amis.extend(mapped_candidates_ami)
+
+        if keep_for_days > 0:
+            for ami in mapped_candidates_ami:
+                f_date = datetime.strptime(ami.creation_date, '%Y-%m-%dT%H:%M:%S.%fZ')
+                present = datetime.now()
+                delta = present - f_date
+                if delta.days < keep_for_days:
+                    result_amis.remove(ami)
+
+        mapped_candidates_ami = result_amis
 
         if not keep_previous:
             return mapped_candidates_ami

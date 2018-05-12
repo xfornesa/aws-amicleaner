@@ -8,7 +8,7 @@ import argparse
 
 from prettytable import PrettyTable
 
-from .resources.config import KEEP_PREVIOUS
+from .resources.config import KEEP_PREVIOUS, KEEP_FOR_DAYS
 
 
 class Printer(object):
@@ -111,6 +111,13 @@ def parse_args(args):
                         dest='check_orphans',
                         action="store_true",
                         help="Check and clean orphaned snapshots")
+
+    parser.add_argument("--keep-for-days",
+                        dest='keep_for_days',
+                        type=int,
+                        default=KEEP_FOR_DAYS,
+                        help="Number of days AMI to keep excluding those "
+                             "currently being running")
 
     parsed_args = parser.parse_args(args)
     if parsed_args.mapping_key and not parsed_args.mapping_values:
