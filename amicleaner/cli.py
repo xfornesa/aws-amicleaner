@@ -146,7 +146,6 @@ class App(object):
         print(TERM.green("keep_previous : {0}".format(self.keep_previous)))
         print(TERM.green("keep_for_days : {0}".format(self.keep_for_days)))
 
-
     @staticmethod
     def print_version():
         print(__version__)
