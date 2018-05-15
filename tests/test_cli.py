@@ -68,7 +68,7 @@ def test_deletion():
 
 @mock_ec2
 @mock_autoscaling
-def test_deletion_keep_for_days():
+def test_deletion_ami_min_days():
     """ Test deletion methods """
 
     # creating tests objects
@@ -90,7 +90,7 @@ def test_deletion_keep_for_days():
     parser = parse_args(
         [
             '--keep-previous', '0',
-            '--keep-for-days', '1',
+            '--ami-min-days', '1',
             '--mapping-key', 'name',
             '--mapping-values', 'test-ami']
     )
@@ -106,7 +106,7 @@ def test_deletion_keep_for_days():
     parser = parse_args(
         [
             '--keep-previous', '0',
-            '--keep-for-days', '10000',
+            '--ami-min-days', '10000',
             '--mapping-key', 'name',
             '--mapping-values', 'test-ami']
     )
@@ -165,7 +165,7 @@ def test_parse_args_no_args():
     assert parser.mapping_key is None
     assert parser.mapping_values is None
     assert parser.keep_previous is 4
-    assert parser.keep_for_days is -1
+    assert parser.ami_min_days is -1
 
 
 def test_parse_args():
@@ -181,8 +181,8 @@ def test_parse_args():
     assert parser.mapping_key == "tags"
     assert len(parser.mapping_values) == 2
 
-    parser = parse_args(['--keep-for-days', '10', '--full-report'])
-    assert parser.keep_for_days == 10
+    parser = parse_args(['--ami-min-days', '10', '--full-report'])
+    assert parser.ami_min_days == 10
     assert parser.full_report is True
 
 

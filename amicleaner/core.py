@@ -233,7 +233,7 @@ class AMICleaner(object):
 
         return ".".join(sorted(tag_values))
 
-    def reduce_candidates(self, mapped_candidates_ami, keep_previous=0, keep_for_days=-1):
+    def reduce_candidates(self, mapped_candidates_ami, keep_previous=0, ami_min_days=-1):
 
         """
         Given a array of AMIs to clean this function return a subsequent
@@ -244,12 +244,12 @@ class AMICleaner(object):
         result_amis = []
         result_amis.extend(mapped_candidates_ami)
 
-        if keep_for_days > 0:
+        if ami_min_days > 0:
             for ami in mapped_candidates_ami:
                 f_date = datetime.strptime(ami.creation_date, '%Y-%m-%dT%H:%M:%S.%fZ')
                 present = datetime.now()
                 delta = present - f_date
-                if delta.days < keep_for_days:
+                if delta.days < ami_min_days:
                     result_amis.remove(ami)
 
         mapped_candidates_ami = result_amis
