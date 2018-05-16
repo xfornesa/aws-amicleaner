@@ -66,6 +66,57 @@ def test_deletion():
     assert len(f.fetch_available_amis()) == 0
 
 
+@mock_ec2
+@mock_autoscaling
+def test_deletion_ami_min_days():
+    """ Test deletion methods """
+
+    # creating tests objects
+    first_ami = AMI()
+    first_ami.name = "test-ami"
+    first_ami.id = 'ami-28c2b348'
+    first_ami.creation_date = "2017-11-04T01:35:31.000Z"
+
+    second_ami = AMI()
+    second_ami.name = "test-ami"
+    second_ami.id = 'ami-28c2b349'
+    second_ami.creation_date = "2017-11-04T01:35:31.000Z"
+
+    # constructing dicts
+    amis_dict = dict()
+    amis_dict[first_ami.id] = first_ami
+    amis_dict[second_ami.id] = second_ami
+
+    parser = parse_args(
+        [
+            '--keep-previous', '0',
+            '--ami-min-days', '1',
+            '--mapping-key', 'name',
+            '--mapping-values', 'test-ami']
+    )
+
+    app = App(parser)
+    # testing filter
+    candidates = app.fetch_candidates(amis_dict)
+
+    candidates_tobedeleted = app.prepare_candidates(candidates)
+    assert len(candidates) == 2
+    assert len(candidates_tobedeleted) == 2
+
+    parser = parse_args(
+        [
+            '--keep-previous', '0',
+            '--ami-min-days', '10000',
+            '--mapping-key', 'name',
+            '--mapping-values', 'test-ami']
+    )
+
+    app = App(parser)
+    candidates_tobedeleted2 = app.prepare_candidates(candidates)
+    assert len(candidates) == 2
+    assert len(candidates_tobedeleted2) == 0
+
+
 def test_fetch_candidates():
     # creating tests objects
     first_ami = AMI()
@@ -114,6 +165,7 @@ def test_parse_args_no_args():
     assert parser.mapping_key is None
     assert parser.mapping_values is None
     assert parser.keep_previous is 4
+    assert parser.ami_min_days is -1
 
 
 def test_parse_args():
@@ -128,6 +180,10 @@ def test_parse_args():
                          '--mapping-values', 'group1', 'group2'])
     assert parser.mapping_key == "tags"
     assert len(parser.mapping_values) == 2
+
+    parser = parse_args(['--ami-min-days', '10', '--full-report'])
+    assert parser.ami_min_days == 10
+    assert parser.full_report is True
 
 
 def test_print_report():
