@@ -4,7 +4,7 @@ from datetime import datetime
 from moto import mock_ec2
 
 from amicleaner.core import AMICleaner, OrphanSnapshotCleaner
-from amicleaner.resources.models import AMI, AWSTag
+from amicleaner.resources.models import AMI, AWSTag, AWSBlockDevice
 
 
 def test_map_candidates_with_null_arguments():
@@ -201,6 +201,23 @@ def test_reduce_without_rotation_number():
 
     # creating amis to drop dict
     candidates = [second_ami, third_ami, first_ami]
+
+    assert AMICleaner().reduce_candidates(candidates) == candidates
+
+
+def test_reduce_without_snapshot_id():
+    # creating block device
+    first_block_device = AWSBlockDevice()
+    first_block_device.snapshot_id = None
+
+    # creating tests objects
+    first_ami = AMI()
+    first_ami.id = 'ami-28c2b348'
+    first_ami.name = "ubuntu-20160102"
+    first_ami.block_device_mappings.append(first_block_device)
+
+    # creating amis to drop dict
+    candidates = [first_ami]
 
     assert AMICleaner().reduce_candidates(candidates) == candidates
 
