@@ -32,3 +32,5 @@ EXCLUDED_MAPPING_VALUES = []
 # Number of days amis to keep based on creation date and grouping strategy
 # not including the ami currently running by an ec2 instance
 AMI_MIN_DAYS = -1
+
+BOTO3_RETRIES = 10
