@@ -71,10 +71,19 @@ def parse_args(args):
                         action="store_true",
                         help="Prints version and exits")
 
+    parser.add_argument("--owner-id",
+                        dest='owner_id',
+                        help="Owner id: [self|amazon|aws-marketplace]")
+
     parser.add_argument("--from-ids",
                         dest='from_ids',
                         nargs='+',
                         help="AMI id(s) you simply want to remove")
+
+    parser.add_argument("--dry-run",
+                        dest='dry_run',
+                        action="store_true",
+                        help="Runs the script but without applying any change")
 
     parser.add_argument("--full-report",
                         dest='full_report',

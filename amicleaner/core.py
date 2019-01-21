@@ -45,11 +45,11 @@ class OrphanSnapshotCleaner(object):
 
         return images[0].get("OwnerId", "")
 
-    def fetch(self):
+    def fetch(self, owner_id):
 
         """ retrieve orphan snapshots """
 
-        resp = self.ec2.describe_images(Owners=['self'])
+        resp = self.ec2.describe_images(Owners=[owner_id])
 
         used_snaps = [
             ebs.get("Ebs", {}).get("SnapshotId")
@@ -130,18 +130,19 @@ class AMICleaner(object):
 
         return failed_snapshots
 
-    def remove_amis_from_ids(self, ami_ids):
+    def remove_amis_from_ids(self, ami_ids, owner_id):
 
         """
         takes a list of AMI ids, verify on aws and removes them
         :param ami_ids: array of AMI ids
+        :param owner_id: aws account id
         """
 
         if not ami_ids:
             return False
 
         my_custom_images = self.ec2.describe_images(
-            Owners=['self'],
+            Owners=[owner_id],
             ImageIds=ami_ids
         )
         amis = []

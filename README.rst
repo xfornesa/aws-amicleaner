@@ -158,6 +158,22 @@ Delete a list of AMIs
     amicleaner --from-ids ami-abcdef01 ami-abcdef02
 
 
+Run this tool in dry run mode
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: bash
+
+    amicleaner --dry-run
+
+
+Specify the aws account owner of the AMIs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: bash
+
+    amicleaner --owner-id 1234567
+
+
 .. |Travis CI| image:: https://travis-ci.org/bonclay7/aws-amicleaner.svg?branch=master
    :target: https://travis-ci.org/bonclay7/aws-amicleaner
 .. |codecov.io| image:: https://codecov.io/github/bonclay7/aws-amicleaner/coverage.svg?branch=master

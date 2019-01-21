@@ -20,13 +20,13 @@ class Fetcher(object):
         self.ec2 = ec2 or boto3.client('ec2', config=Config(retries={'max_attempts': BOTO3_RETRIES}))
         self.asg = autoscaling or boto3.client('autoscaling')
 
-    def fetch_available_amis(self):
+    def fetch_available_amis(self, owner_id='self'):
 
         """ Retrieve from your aws account your custom AMIs"""
 
         available_amis = dict()
 
-        my_custom_images = self.ec2.describe_images(Owners=['self'])
+        my_custom_images = self.ec2.describe_images(Owners=[owner_id])
         for image_json in my_custom_images.get('Images'):
             ami = AMI.object_with_json(image_json)
             available_amis[ami.id] = ami

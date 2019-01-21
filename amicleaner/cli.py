@@ -29,6 +29,8 @@ class App(object):
         self.full_report = args.full_report
         self.force_delete = args.force_delete
         self.ami_min_days = args.ami_min_days
+        self.owner_id = args.owner_id or "self"
+        self.dry_run = args.dry_run
 
         self.mapping_strategy = {
             "key": self.mapping_key,
@@ -45,7 +47,7 @@ class App(object):
         """
         f = Fetcher()
 
-        available_amis = available_amis or f.fetch_available_amis()
+        available_amis = available_amis or f.fetch_available_amis(self.owner_id)
         excluded_amis = excluded_amis or []
 
         if not excluded_amis:
@@ -103,33 +105,42 @@ class App(object):
         failed = []
 
         if from_ids:
-            print(TERM.bold("\nCleaning from {} AMI id(s) ...".format(
-                len(candidates))
-            ))
-            failed = AMICleaner().remove_amis_from_ids(candidates)
+            if self.dry_run:
+                print(TERM.bold("\n[dry-run] Would clean {} from AMI id(s) ...".format(len(candidates))))
+            else:
+                print(TERM.bold("\nCleaning {} from AMI id(s) ...".format(
+                    len(candidates))
+                ))
+                failed = AMICleaner().remove_amis_from_ids(candidates, self.owner_id)
         else:
-            print(TERM.bold("\nCleaning {} AMIs ...".format(len(candidates))))
-            failed = AMICleaner().remove_amis(candidates)
+            if self.dry_run:
+                print(TERM.bold("\n[dry-run] Would clean {} AMIs ...".format(len(candidates))))
+            else:
+                print(TERM.bold("\nCleaning {} AMIs ...".format(len(candidates))))
+                failed = AMICleaner().remove_amis(candidates)
 
         if failed:
             print(TERM.red("\n{0} failed snapshots".format(len(failed))))
             Printer.print_failed_snapshots(failed)
 
-    def clean_orphans(self):
+    def clean_orphans(self, owner_id):
 
         """ Find and removes orphan snapshots """
 
         cleaner = OrphanSnapshotCleaner()
-        snaps = cleaner.fetch()
+        snaps = cleaner.fetch(owner_id)
 
         if not snaps:
             return
 
         Printer.print_orphan_snapshots(snaps)
 
-        answer = input(
-            "Do you want to continue and remove {} orphan snapshots "
-            "[y/N] ? : ".format(len(snaps)))
+        if self.dry_run:
+            answer = 'N'
+        else:
+            answer = input(
+                "Do you want to continue and remove {} orphan snapshots "
+                "[y/N] ? : ".format(len(snaps)))
         confirm = (answer.lower() == "y")
 
         if confirm:
@@ -140,6 +151,7 @@ class App(object):
     def print_defaults(self):
 
         print(TERM.bold("\nDefault values : ==>"))
+        print(TERM.green("owner_id : {0}".format(self.owner_id)))
         print(TERM.green("mapping_key : {0}".format(self.mapping_key)))
         print(TERM.green("mapping_values : {0}".format(self.mapping_values)))
         print(TERM.green("excluded_mapping_values : {0}".format(self.excluded_mapping_values)))
@@ -153,7 +165,7 @@ class App(object):
     def run_cli(self):
 
         if self.check_orphans:
-            self.clean_orphans()
+            self.clean_orphans(self.owner_id)
 
         if self.from_ids:
             self.prepare_delete_amis(self.from_ids, from_ids=True)
@@ -167,18 +179,21 @@ class App(object):
             if not candidates:
                 sys.exit(0)
 
-            delete = False
-
-            if not self.force_delete:
-                answer = input(
-                    "Do you want to continue and remove {} AMIs "
-                    "[y/N] ? : ".format(len(candidates)))
-                delete = (answer.lower() == "y")
+            if self.dry_run:
+                delete = False
             else:
-                delete = True
+                if not self.force_delete:
+                    answer = input(
+                        "Do you want to continue and remove {} AMIs "
+                        "[y/N] ? : ".format(len(candidates)))
+                    delete = (answer.lower() == "y")
+                else:
+                    delete = True
 
             if delete:
                 self.prepare_delete_amis(candidates)
+            else:
+                print(TERM.bold("Found {} AMIs to remove".format(len(candidates))))
 
 
 def main():
