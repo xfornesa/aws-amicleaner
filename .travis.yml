@@ -1,6 +1,7 @@
 env:
   global:
     - AWS_DEFAULT_REGION=eu-west-1
+    - BOTO_CONFIG=/dev/null
 
 dist: trusty
 language: python
